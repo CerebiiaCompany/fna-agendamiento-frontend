@@ -69,7 +69,7 @@ export function AppHeader() {
               <button
                 type="button"
                 onClick={() => logout()}
-                className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-sky-700"
+                className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-sky-500 hover:text-white"
               >
                 Cerrar sesión
               </button>

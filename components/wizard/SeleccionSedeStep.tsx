@@ -2,21 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useAppointmentStore } from "../../store/appointmentStore";
-import {
-  obtenerSedesPorCiudad,
-  obtenerServiciosPorSede,
-  getApiErrorMessage,
-  type Service,
+import {obtenerEstructuraCiudad, getApiErrorMessage,
+  type CityStructure,
 } from "../../lib/api";
 import type { TipoTramite as TipoTramiteStore } from "../../store/appointmentStore";
+
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
 type EstadoCarga = "idle" | "loading" | "success" | "error";
@@ -31,10 +23,10 @@ export function SeleccionSedeStep() {
     setPasoActual,
   } = useAppointmentStore();
 
-  const [servicios, setServicios] = useState<Service[]>([]);
   const [opcionesTramite, setOpcionesTramite] = useState<TipoTramiteOption[]>([]);
   const [estado, setEstado] = useState<EstadoCarga>("idle");
   const [errorMensaje, setErrorMensaje] = useState<string | null>(null);
+
   const [optionKey, setOptionKey] = useState<string>(
     tipoTramiteSeleccionado
       ? `${tipoTramiteSeleccionado.departmentId}-${tipoTramiteSeleccionado.subdepartmentId}`
@@ -45,66 +37,87 @@ export function SeleccionSedeStep() {
     if (ciudadId == null) return;
 
     const abort = new AbortController();
-    setEstado("loading");
-    setErrorMensaje(null);
 
-    obtenerSedesPorCiudad(ciudadId, abort.signal)
-      .then((oficinas) => {
+    const cargar = async () => {
+      setEstado("loading");
+      setErrorMensaje(null);
+
+      try {
+        const estructura: CityStructure[] = await obtenerEstructuraCiudad(
+          ciudadId,
+          abort.signal
+        );
+
+        if (abort.signal.aborted) return;
+
+        // guardar oficinas en el store
+        const oficinas = estructura.map((b) => ({
+          id: b.id,
+          name: b.name,
+          direction: b.direction,
+        }));
+
         setOficinas(oficinas);
-        if (oficinas.length === 0) {
-          setServicios([]);
+
+        if (estructura.length === 0) {
           setOpcionesTramite([]);
           setEstado("success");
           return;
         }
-        return obtenerServiciosPorSede(oficinas[0].id, abort.signal);
-      })
-      .then((list) => {
-        if (abort.signal.aborted || !list) return;
-        setServicios(list);
+
+        // construir opciones de trámite
         const opciones: TipoTramiteOption[] = [];
-        list.forEach((s) => {
-          s.subservices.forEach((sub) => {
-            opciones.push({
-              departmentId: s.id,
-              subdepartmentId: sub.id,
-              departmentName: s.name,
-              subdepartmentName: sub.name,
-              optionKey: `${s.id}-${sub.id}`,
+
+        estructura.forEach((branch) => {
+          branch.services.forEach((service) => {
+            service.subservices.forEach((sub) => {
+              opciones.push({
+                departmentId: service.id,
+                subdepartmentId: sub.id,
+                departmentName: service.name,
+                subdepartmentName: sub.name,
+                optionKey: `${service.id}-${sub.id}`,
+              });
             });
           });
         });
+
         setOpcionesTramite(opciones);
         setEstado("success");
-      })
-      .catch((err) => {
+      } catch (err) {
         if (abort.signal.aborted) return;
         setEstado("error");
         setErrorMensaje(getApiErrorMessage(err));
-      });
+      }
+    };
+
+    cargar();
 
     return () => abort.abort();
   }, [ciudadId, setOficinas]);
 
   const handleContinuar = () => {
     const opcion = opcionesTramite.find((o) => o.optionKey === optionKey);
+
     if (!opcion) {
       setErrorMensaje("Selecciona un tipo de trámite.");
       return;
     }
+
     setTipoTramite({
       departmentId: opcion.departmentId,
       subdepartmentId: opcion.subdepartmentId,
       departmentName: opcion.departmentName,
       subdepartmentName: opcion.subdepartmentName,
     });
+
     setPasoActual(3);
   };
 
   const puedeContinuar = Boolean(optionKey);
 
   return (
-    <main className="min-h-screen bg-background p-4 md:p-8">
+    <main className="bg-background p-4 md:p-8">
       <Card className="mx-auto max-w-4xl shadow-lg">
         <CardContent className="p-6 md:p-8">
           <div className="space-y-2 mb-6">
@@ -121,6 +134,7 @@ export function SeleccionSedeStep() {
             <label className="text-sm font-medium text-foreground">
               Tipo de trámite
             </label>
+
             <Select
               value={optionKey}
               onValueChange={setOptionKey}
@@ -135,6 +149,7 @@ export function SeleccionSedeStep() {
                   }
                 />
               </SelectTrigger>
+
               <SelectContent>
                 {opcionesTramite.map((o) => (
                   <SelectItem key={o.optionKey} value={o.optionKey}>
@@ -163,8 +178,9 @@ export function SeleccionSedeStep() {
             >
               Volver
             </Button>
+
             <Button
-              className="order-1 sm:order-2"
+              className="order-1 sm:order-2 bg-sky-700"
               disabled={!puedeContinuar}
               onClick={handleContinuar}
             >

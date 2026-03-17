@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import ReCAPTCHA from "react-google-recaptcha";
 import { useAppointmentStore } from "../../store/appointmentStore";
 import { crearCita, getApiErrorMessage } from "../../lib/api";
 
@@ -21,6 +22,7 @@ export function ConfirmacionStep() {
 
   const [estado, setEstado] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMensaje, setErrorMensaje] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   if (!datosCliente || !sedeSeleccionada || !tipoTramiteSeleccionado || !slotSeleccionado) {
     return (
@@ -35,16 +37,22 @@ export function ConfirmacionStep() {
     "EEEE d 'de' MMMM yyyy",
     { locale: es }
   );
+
   const horaNormalizada =
     slotSeleccionado.hour.length > 5
       ? slotSeleccionado.hour.slice(0, 5)
       : slotSeleccionado.hour;
 
   const handleConfirmar = async () => {
+    if (!captchaToken) {
+      setErrorMensaje("Debes completar el captcha antes de confirmar.");
+      return;
+    }
+
     setEstado("loading");
     setErrorMensaje(null);
 
-    const datePetition = `${slotSeleccionado.date}T${horaNormalizada}`;
+    const datePetition = `${slotSeleccionado.date}T${horaNormalizada}:00`;
     const browserVersion =
       typeof navigator !== "undefined" ? navigator.userAgent : "FNA-Frontend";
 
@@ -69,7 +77,9 @@ export function ConfirmacionStep() {
         sede: String(sedeSeleccionada.id),
         subdepartmentId: String(tipoTramiteSeleccionado.subdepartmentId),
         typeNotify: datosCliente.typeNotify ?? "email",
+        "g-recaptcha-response": captchaToken,
       };
+
       const cita = await crearCita(payload);
       setCitaConfirmada(cita);
       setEstado("success");
@@ -104,7 +114,9 @@ export function ConfirmacionStep() {
               {datosCliente.email} • {datosCliente.phone}
             </p>
           </div>
+
           <hr className="border-dashed border-slate-100" />
+
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
               Sede y trámite
@@ -115,7 +127,9 @@ export function ConfirmacionStep() {
               Trámite: {tipoTramiteSeleccionado.subdepartmentName}
             </p>
           </div>
+
           <hr className="border-dashed border-slate-100" />
+
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
               Fecha y horario
@@ -131,6 +145,15 @@ export function ConfirmacionStep() {
           </div>
         )}
 
+        {!cita && (
+          <div className="mt-4">
+            <ReCAPTCHA
+              sitekey="6Lcl0IwsAAAAAHfu_1ybQdC3V_Ge7uysDvMe6Zd8"
+              onChange={(token: string | null) => setCaptchaToken(token)}
+            />
+          </div>
+        )}
+
         <div className="mt-5 flex items-center gap-3">
           <button
             type="button"
@@ -140,6 +163,7 @@ export function ConfirmacionStep() {
           >
             Volver
           </button>
+
           {!cita && (
             <button
               type="button"
@@ -158,23 +182,17 @@ export function ConfirmacionStep() {
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
             Confirmación
           </p>
+
           {cita ? (
             <>
-              <p className="mt-1 text-base font-semibold">¡Tu cita ha sido agendada!</p>
-              <p className="mt-1 text-xs">
-                Guarda el ID de tu cita. Te enviaremos el detalle a tu correo.
-              </p>
-              <div className="mt-3 flex items-center justify-between rounded-xl bg-white/80 px-3 py-2">
-                <span className="text-xs font-medium text-slate-500">ID de cita</span>
-                <span className="text-sm font-semibold text-emerald-700">
-                  {cita.appointmentId}
-                </span>
-              </div>
-              <p className="mt-2 text-xs font-medium">Estado: {cita.status}</p>
+              <p className="mt-1 text-base font-semibold">¡La cita ha sido agendada!</p>
+
+              <p className="mt-2 text-xs font-medium">Recomendaciones al usuario: {cita.status}</p>
+
               <ul className="mt-3 list-disc space-y-1 pl-5 text-xs">
                 <li>Llega 10 minutos antes de la hora programada.</li>
                 <li>Lleva tu documento de identidad y los soportes del trámite.</li>
-                <li>Si no puedes asistir, cancela o reprograma desde los canales del FNA.</li>
+                <li>Si no puedes asistir, cancela o reprograma.</li>
               </ul>
             </>
           ) : (
@@ -183,6 +201,7 @@ export function ConfirmacionStep() {
             </p>
           )}
         </div>
+
         {cita && (
           <div className="mt-4 flex justify-end">
             <button

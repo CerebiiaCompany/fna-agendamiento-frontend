@@ -31,7 +31,7 @@ export function LoginForm() {
   const setAuth = useAuthStore((s) => s.setAuth);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const nextUrl = searchParams.get("next") ?? "/";
+  const nextUrl = searchParams.get("next") ?? "/scheduling";
 
   const {
     register,

@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { useEffect, useState } from "react";
 import { useAppointmentStore } from "../../store/appointmentStore";
 import {
@@ -8,13 +8,15 @@ import {
   type OfficeAvailability,
   type ScheduleItem,
 } from "../../lib/api";
-
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { MapPin } from "lucide-react";
+ 
 type EstadoCarga = "idle" | "loading" | "success" | "error";
-
+ 
 export function SeleccionHorarioStep() {
   const {
     ciudadId,
-    ciudadNombre,
     oficinas,
     sedeSeleccionada,
     tipoTramiteSeleccionado,
@@ -23,259 +25,305 @@ export function SeleccionHorarioStep() {
     setSlot,
     setPasoActual,
   } = useAppointmentStore();
-
-  const [oficinasDisponibles, setOficinasDisponibles] = useState<
-    OfficeAvailability[]
-  >([]);
+ 
+  const [oficinasDisponibles, setOficinasDisponibles] =
+    useState<OfficeAvailability[]>([]);
+ 
   const [estado, setEstado] = useState<EstadoCarga>("idle");
   const [errorMensaje, setErrorMensaje] = useState<string | null>(null);
-  const [officeIdLocal, setOfficeIdLocal] = useState<number | "">(
-    sedeSeleccionada?.id ?? ""
-  );
-  const [scheduleSelected, setScheduleSelected] = useState<ScheduleItem | null>(
-    null
-  );
+ 
+  const [scheduleSelected, setScheduleSelected] =
+    useState<ScheduleItem | null>(null);
+ 
   const [horaSeleccionada, setHoraSeleccionada] = useState<string>(
     slotSeleccionado?.hour ?? ""
   );
+ 
+  const oficinaActual: OfficeAvailability | undefined = oficinasDisponibles[0];
 
-  const oficinaActual = oficinasDisponibles.find(
-    (o) => o.officeId === officeIdLocal
-  );
-  const schedules = oficinaActual?.schedules ?? [];
-  const scheduleHours = scheduleSelected?.scheduleHours ?? [];
-  const horas = scheduleHours.map((sh) => sh.hour);
-
+  const [slotSeleccionadoOfficeId, setSlotSeleccionadoOfficeId] = useState<number | null>(null);
+ 
   useEffect(() => {
-    // departmentId para horarios = id del subservicio (tipo de trámite seleccionado)
-    if (!ciudadId || !tipoTramiteSeleccionado) {
-      setOficinasDisponibles([]);
-      return;
-    }
-
     const abort = new AbortController();
-    setEstado("loading");
-    setErrorMensaje(null);
-
-    const hoy = new Date().toISOString().slice(0, 10);
-
-    obtenerDisponibilidadPorOficinas(
-      {
-        cityId: ciudadId,
-        departmentId: tipoTramiteSeleccionado.subdepartmentId,
-        startDate: hoy,
-      },
-      abort.signal
-    )
-      .then((data) => {
+ 
+    const cargar = async () => {
+      if (!ciudadId || !tipoTramiteSeleccionado) {
+        setOficinasDisponibles([]);
+        return;
+      }
+ 
+      setEstado("loading");
+      setErrorMensaje(null);
+ 
+      const hoy = new Date().toISOString().slice(0, 10);
+ 
+      try {
+        const data = await obtenerDisponibilidadPorOficinas(
+          {
+            cityId: ciudadId,
+            departmentId: tipoTramiteSeleccionado.departmentId,
+            subdepartmentId: tipoTramiteSeleccionado.subdepartmentId,
+            startDate: hoy,
+          },
+          abort.signal
+        );
+ 
+        if (abort.signal.aborted) return;
+ 
         setOficinasDisponibles(data);
         setEstado("success");
-      })
-      .catch((err) => {
+ 
+        if (data.length > 0) {
+          const sede = oficinas.find((o) => o.id === data[0].officeId);
+          if (sede) setSede(sede);
+        }
+      } catch (err) {
         if (abort.signal.aborted) return;
+ 
         setEstado("error");
         setOficinasDisponibles([]);
         setErrorMensaje(getApiErrorMessage(err));
-      });
-
+      }
+    };
+ 
+    cargar();
+ 
     return () => abort.abort();
-  }, [ciudadId, tipoTramiteSeleccionado?.subdepartmentId]);
-
-  const handleOfficeChange = (id: string) => {
-    const num = id === "" ? "" : Number(id);
-    setOfficeIdLocal(num);
-    setScheduleSelected(null);
-    setHoraSeleccionada("");
-    if (num !== "") {
-      const s = oficinas.find((o) => o.id === num);
-      if (s) setSede(s);
-    }
+  }, [ciudadId, tipoTramiteSeleccionado, oficinas, setSede]);
+ 
+  const handleSeleccionarHora = (schedule: ScheduleItem, hora: string, oficina: OfficeAvailability) => {
+    setScheduleSelected(schedule);
+    setHoraSeleccionada(hora);
+    setSlotSeleccionadoOfficeId(oficina.officeId);
   };
-
+ 
   const handleContinuar = () => {
-    const sede = oficinas.find((o) => o.id === officeIdLocal) ?? sedeSeleccionada;
-    if (!sede) {
-      setErrorMensaje("Selecciona una sede.");
+    if (!oficinaActual) {
+      setErrorMensaje("No se encontró la sede.");
       return;
     }
+ 
     if (!scheduleSelected) {
       setErrorMensaje("Selecciona una fecha.");
       return;
     }
+ 
     if (!horaSeleccionada) {
       setErrorMensaje("Selecciona un horario.");
       return;
     }
-    setSede(sede);
-    setSlot({ date: scheduleSelected.date, hour: horaSeleccionada });
+ 
+    const sede = oficinas.find((o) => o.id === oficinaActual.officeId) ?? sedeSeleccionada;
+    if (sede) setSede(sede);
+ 
+    setSlot({
+      date: scheduleSelected.date,
+      hour: horaSeleccionada,
+    });
+ 
     setPasoActual(4);
   };
-
-  const puedeContinuar = Boolean(
-    officeIdLocal !== "" && scheduleSelected && horaSeleccionada
-  );
-
+ 
+  const puedeContinuar = Boolean(scheduleSelected && horaSeleccionada);
+ 
+  // Ordenar horas cronológicamente
+  const sortHours = (hours: { hour: string }[]) =>
+    [...hours].sort((a, b) => a.hour.localeCompare(b.hour));
+ 
+  // Capitalizar día
+  const capDay = (day: string) =>
+    day.charAt(0).toUpperCase() + day.slice(1).toLowerCase();
+ 
+  // Formatear fecha dd/mm/yyyy
+  const formatDate = (dateStr: string) => {
+    const [y, m, d] = dateStr.split("-");
+    return `${d}/${m}/${y}`;
+  };
+ 
   return (
     <main className="min-h-screen bg-background p-4 md:p-8">
-      <div className="mx-auto max-w-4xl rounded-xl border bg-white shadow-lg">
-        <div className="p-6 md:p-8">
-          <div className="grid gap-8 lg:grid-cols-2">
-            {/* Left Section - Sede y Fecha */}
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-semibold text-foreground">
-                  Selecciona la sede, fecha y horario
-                </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Elige la oficina, el día y uno de los horarios disponibles.
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                {/* Sede */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Sede
-                  </label>
-                  <select
-                    className="w-full rounded-md border border-primary/50 bg-background px-3 py-2 text-sm outline-none transition focus:border-primary"
-                    value={officeIdLocal === "" ? "" : String(officeIdLocal)}
-                    onChange={(e) => handleOfficeChange(e.target.value)}
-                    disabled={estado === "loading"}
-                  >
-                    <option value="">
-                      {estado === "loading"
-                        ? "Cargando oficinas..."
-                        : "Selecciona una sede"}
-                    </option>
-                    {oficinasDisponibles.map((o) => (
-                      <option key={o.officeId} value={o.officeId}>
-                        {o.descriptionOffice}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Fecha */}
-                {oficinaActual && schedules.length > 0 && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">
-                      Fecha
-                    </label>
-                    <div className="rounded-md border border-primary/50 bg-background p-1">
-                      <div className="mb-2 rounded-t-md border-b border-primary/30 bg-accent/30 px-3 py-2 text-sm font-medium text-foreground">
-                        {scheduleSelected
-                          ? `${scheduleSelected.weekDay} ${scheduleSelected.date}`
-                          : "Selecciona una fecha"}
-                      </div>
-                      <div className="max-h-52 overflow-y-auto px-2 py-1">
-                        <div className="space-y-1 text-sm">
-                          {schedules.map((s) => (
-                            <button
-                              key={s.date}
-                              type="button"
-                              disabled={s.disabled}
-                              onClick={() => {
-                                setScheduleSelected(s);
-                                setHoraSeleccionada("");
-                              }}
-                              className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition ${
-                                scheduleSelected?.date === s.date
-                                  ? "bg-primary text-primary-foreground shadow"
-                                  : "hover:bg-accent"
-                              } ${
-                                s.disabled ? "cursor-not-allowed opacity-50" : ""
-                              }`}
-                            >
-                              <span>
-                                {s.weekDay} {s.date}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+      <Card className="mx-auto max-w-4xl shadow-md border border-slate-200 bg-white">
+        <CardContent className="p-0 overflow-hidden rounded-xl">
+ 
+          {/* Header título */}
+          <div className="px-6 pt-6 pb-4">
+            <h2 className="text-xl font-semibold text-foreground">
+              Selecciona la fecha y horario
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Elige el día y uno de los horarios disponibles.
+            </p>
+          </div>
+ 
+          {/* Estado: loading */}
+          {estado === "loading" && (
+            <div className="px-6 pb-6">
+              <p className="text-sm text-muted-foreground">
+                Cargando horarios disponibles...
+              </p>
+            </div>
+          )}
+ 
+          {/* Estado: error */}
+          {estado === "error" && (
+            <div className="px-6 pb-6">
+              <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {errorMensaje}
               </div>
             </div>
+          )}
+ 
+          {/* Estado: éxito */}
+          {estado === "success" && oficinasDisponibles && oficinasDisponibles.length > 0 && (
+            <>
+              {oficinasDisponibles.map((oficina) => {
+                const schedules = oficina.schedules ?? [];
 
-            {/* Right Section - Time Slots */}
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">
-                  Horarios disponibles
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Selecciona el horario de tu preferencia
-                </p>
-              </div>
+                return (
+                  <div key={oficina.officeId}>
+                    {/* Barra de sede */}
+                    <div className="flex items-center gap-3 bg-slate-800 text-white px-5 py-3 mx-6 rounded-lg mb-0">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/15 shrink-0">
+                        <MapPin className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm leading-tight">
+                          {oficina.descriptionOffice}
+                        </p>
+                      </div>
+                    </div>
 
-              {estado === "loading" && (
-                <p className="text-sm text-muted-foreground">
-                  Cargando oficinas y horarios...
-                </p>
-              )}
-              {estado === "error" && (
-                <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {/* Tabla de horarios */}
+                    <div className="mx-6 mt-3 mb-4 rounded-lg border border-slate-200 overflow-hidden">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="bg-slate-50 border-b border-slate-200">
+                            <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 tracking-wide uppercase w-32">
+                              Fecha
+                            </th>
+                            <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 tracking-wide uppercase">
+                              Horarios disponibles
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(() => {
+                            const filtered = schedules.filter(
+                              (s: ScheduleItem) => s.weekDay !== "DOMINGO" && s.scheduleHours.length > 0
+                            );
+
+                            if (filtered.length === 0) {
+                              return (
+                                <tr>
+                                  <td colSpan={2} className="px-4 py-6 text-center text-sm text-slate-400 italic">
+                                    Sin turnos disponibles para esta sede
+                                  </td>
+                                </tr>
+                              );
+                            }
+
+                            return filtered.map((s: ScheduleItem) => {
+                              const sorted = sortHours(s.scheduleHours);
+                              return (
+                                <tr
+                                  key={s.date}
+                                  className="border-b border-slate-100 last:border-b-0"
+                                >
+                                  <td className="px-4 py-4 align-top">
+                                    <p className="text-sm font-medium text-slate-800">
+                                      {capDay(s.weekDay)}
+                                    </p>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                      {formatDate(s.date)}
+                                    </p>
+                                  </td>
+                                  <td className="px-4 py-4">
+                                    <div className="flex flex-wrap gap-2">
+                                      {sorted.map((h) => {
+                                        const nextHour = (() => {
+                                          const [hh, mm] = h.hour.split(":").map(Number);
+                                          const total = hh * 60 + mm + 20;
+                                          return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+                                        })();
+
+                                        const isSelected =
+                                          scheduleSelected?.date === s.date &&
+                                          horaSeleccionada === h.hour &&
+                                          slotSeleccionadoOfficeId === oficina.officeId;
+
+                                        return (
+                                          <button
+                                            key={h.hour}
+                                            onClick={() => handleSeleccionarHora(s, h.hour, oficina)}
+                                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border
+                                              ${
+                                                isSelected
+                                                  ? "bg-green-500 text-white border-green-500 shadow-sm"
+                                                  : "bg-sky-400 text-white border-sky-400 hover:bg-sky-500 hover:border-sky-500"
+                                              }`}
+                                          >
+                                            {h.hour} - {nextHour}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            });
+                          })()}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Error de validación */}
+              {errorMensaje && (
+                <div className="mx-6 mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   {errorMensaje}
                 </div>
               )}
-              {estado === "success" &&
-                scheduleSelected &&
-                horas.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    No hay horarios para este día.
-                  </p>
-                )}
-              {estado === "success" &&
-                (!scheduleSelected || !oficinaActual) && (
-                  <p className="text-sm text-muted-foreground">
-                    Primero elige una sede y una fecha.
-                  </p>
-                )}
 
-              {estado === "success" && horas.length > 0 && (
-                <div className="grid grid-cols-3 gap-3">
-                  {horas.map((time) => (
-                    <button
-                      key={time}
-                      type="button"
-                      onClick={() => setHoraSeleccionada(time)}
-                      className={`h-12 rounded-md border text-sm font-medium transition-all ${
-                        horaSeleccionada === time
-                          ? "bg-primary text-primary-foreground shadow-md"
-                          : "border-border hover:border-primary hover:bg-accent"
-                      }`}
-                    >
-                      {time}
-                    </button>
-                  ))}
+              {/* Slot seleccionado */}
+              {scheduleSelected && horaSeleccionada && (
+                <div className="mx-6 mb-4 rounded-md bg-green-50 border border-green-200 px-4 py-2.5 text-sm text-green-800">
+                  Seleccionado:{" "}
+                  <span className="font-medium">
+                    {capDay(scheduleSelected.weekDay)} {formatDate(scheduleSelected.date)}
+                  </span>{" "}
+                  a las <span className="font-medium">{horaSeleccionada}</span>
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:justify-between">
-                <button
-                  type="button"
-                  onClick={() => setPasoActual(2)}
-                  className="order-2 inline-flex items-center justify-center rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent sm:order-1"
-                >
+              {/* Botones */}
+              <div className="flex flex-col gap-3 px-6 pb-6 sm:flex-row sm:justify-between">
+                <Button variant="outline" className="order-2 sm:order-1" onClick={() => setPasoActual(2)}>
                   Volver
-                </button>
-                <button
-                  type="button"
-                  onClick={handleContinuar}
+                </Button>
+                <Button
+                  className="bg-cyan-400 hover:bg-cyan-500 text-white order-1 sm:order-2"
                   disabled={!puedeContinuar}
-                  className="order-1 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:order-2"
+                  onClick={handleContinuar}
                 >
                   Continuar a datos del usuario
-                </button>
+                </Button>
               </div>
+            </>
+          )}
+ 
+          {/* Sin datos */}
+          {estado === "success" && !oficinaActual && (
+            <div className="px-6 pb-6">
+              <p className="text-sm text-muted-foreground">
+                No hay disponibilidad para la sede seleccionada.
+              </p>
             </div>
-          </div>
-        </div>
-      </div>
+          )}
+ 
+        </CardContent>
+      </Card>
     </main>
   );
 }
