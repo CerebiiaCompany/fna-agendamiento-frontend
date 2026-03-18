@@ -39,6 +39,13 @@ export type CityStructure = {
   services: Service[];
 };
 
+// Sede utilizada en el store y pasos del wizard
+export type Sede = {
+  id: number;
+  name: string;
+  direction: string;
+};
+
 
 // disponibilidad
 

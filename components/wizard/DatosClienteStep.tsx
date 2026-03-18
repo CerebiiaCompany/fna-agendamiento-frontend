@@ -12,7 +12,7 @@ const schema = z.object({
   email: z.string().min(1, "El correo es obligatorio").email("Correo electrónico válido"),
   phone: z.string().min(7, "Celular válido").max(20, "Número demasiado largo"),
   gender: z.string().min(1, "Selecciona género"),
-  typeNotify: z.enum(["email", "whatsapp"], { required_error: "Selecciona cómo recibir la confirmación" }),
+  typeNotify: z.enum(["email", "whatsapp"], { error: "Selecciona cómo recibir la confirmación" }),
 });
 
 type FormValues = z.infer<typeof schema>;
