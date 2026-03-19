@@ -1,5 +1,5 @@
 "use client";
- 
+
 import { useEffect, useState } from "react";
 import { useAppointmentStore } from "../../store/appointmentStore";
 import {
@@ -11,9 +11,9 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
- 
+
 type EstadoCarga = "idle" | "loading" | "success" | "error";
- 
+
 export function SeleccionHorarioStep() {
   const {
     ciudadId,
@@ -25,38 +25,33 @@ export function SeleccionHorarioStep() {
     setSlot,
     setPasoActual,
   } = useAppointmentStore();
- 
+
   const [oficinasDisponibles, setOficinasDisponibles] =
     useState<OfficeAvailability[]>([]);
- 
+
   const [estado, setEstado] = useState<EstadoCarga>("idle");
   const [errorMensaje, setErrorMensaje] = useState<string | null>(null);
- 
-  const [scheduleSelected, setScheduleSelected] =
-    useState<ScheduleItem | null>(null);
- 
+  const [scheduleSelected, setScheduleSelected] = useState<ScheduleItem | null>(null);
   const [horaSeleccionada, setHoraSeleccionada] = useState<string>(
     slotSeleccionado?.hour ?? ""
   );
- 
-  const oficinaActual: OfficeAvailability | undefined = oficinasDisponibles[0];
-
   const [slotSeleccionadoOfficeId, setSlotSeleccionadoOfficeId] = useState<number | null>(null);
- 
+
+  // ── Carga disponibilidad ─────────────────────────────────────────────────
   useEffect(() => {
     const abort = new AbortController();
- 
+
     const cargar = async () => {
       if (!ciudadId || !tipoTramiteSeleccionado) {
         setOficinasDisponibles([]);
         return;
       }
- 
+
       setEstado("loading");
       setErrorMensaje(null);
- 
+
       const hoy = new Date().toISOString().slice(0, 10);
- 
+
       try {
         const data = await obtenerDisponibilidadPorOficinas(
           {
@@ -67,85 +62,87 @@ export function SeleccionHorarioStep() {
           },
           abort.signal
         );
- 
+
         if (abort.signal.aborted) return;
- 
+
         setOficinasDisponibles(data);
         setEstado("success");
- 
-        if (data.length > 0) {
-          const sede = oficinas.find((o) => o.id === data[0].officeId);
-          if (sede) setSede(sede);
-        }
       } catch (err) {
         if (abort.signal.aborted) return;
- 
         setEstado("error");
         setOficinasDisponibles([]);
         setErrorMensaje(getApiErrorMessage(err));
       }
     };
- 
+
     cargar();
- 
     return () => abort.abort();
-  }, [ciudadId, tipoTramiteSeleccionado, oficinas, setSede]);
- 
-  const handleSeleccionarHora = (schedule: ScheduleItem, hora: string, oficina: OfficeAvailability) => {
+  }, [ciudadId, tipoTramiteSeleccionado]);
+
+  // ── Selección de hora ────────────────────────────────────────────────────
+  const handleSeleccionarHora = (
+    schedule: ScheduleItem,
+    hora: string,
+    oficina: OfficeAvailability
+  ) => {
     setScheduleSelected(schedule);
     setHoraSeleccionada(hora);
     setSlotSeleccionadoOfficeId(oficina.officeId);
+    setErrorMensaje(null);
   };
- 
+
+  // ── Continuar ────────────────────────────────────────────────────────────
   const handleContinuar = () => {
-    if (!oficinaActual) {
-      setErrorMensaje("No se encontró la sede.");
-      return;
-    }
- 
     if (!scheduleSelected) {
       setErrorMensaje("Selecciona una fecha.");
       return;
     }
- 
+
     if (!horaSeleccionada) {
       setErrorMensaje("Selecciona un horario.");
       return;
     }
- 
-    const sede = oficinas.find((o) => o.id === oficinaActual.officeId) ?? sedeSeleccionada;
-    if (sede) setSede(sede);
- 
+
+    if (!slotSeleccionadoOfficeId) {
+      setErrorMensaje("No se encontró la sede del horario seleccionado.");
+      return;
+    }
+
+    // Guardar la sede que corresponde al horario seleccionado por el usuario
+    const sedeDelSlot = oficinas.find((o) => o.id === slotSeleccionadoOfficeId);
+    if (sedeDelSlot) {
+      setSede(sedeDelSlot);
+    }
+
     setSlot({
       date: scheduleSelected.date,
       hour: horaSeleccionada,
     });
- 
+
     setPasoActual(4);
   };
- 
+
   const puedeContinuar = Boolean(scheduleSelected && horaSeleccionada);
- 
-  // Ordenar horas cronológicamente
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
   const sortHours = (hours: { hour: string }[]) =>
     [...hours].sort((a, b) => a.hour.localeCompare(b.hour));
- 
-  // Capitalizar día
+
   const capDay = (day: string) =>
     day.charAt(0).toUpperCase() + day.slice(1).toLowerCase();
- 
-  // Formatear fecha dd/mm/yyyy
+
   const formatDate = (dateStr: string) => {
     const [y, m, d] = dateStr.split("-");
     return `${d}/${m}/${y}`;
   };
- 
+
+  // ── Render ───────────────────────────────────────────────────────────────
   return (
     <main className="min-h-screen bg-background p-4 md:p-8">
       <Card className="mx-auto max-w-4xl shadow-md border border-slate-200 bg-white">
         <CardContent className="p-0 overflow-hidden rounded-xl">
- 
-          {/* Header título */}
+
+          {/* Header */}
           <div className="px-6 pt-6 pb-4">
             <h2 className="text-xl font-semibold text-foreground">
               Selecciona la fecha y horario
@@ -154,8 +151,8 @@ export function SeleccionHorarioStep() {
               Elige el día y uno de los horarios disponibles.
             </p>
           </div>
- 
-          {/* Estado: loading */}
+
+          {/* Loading */}
           {estado === "loading" && (
             <div className="px-6 pb-6">
               <p className="text-sm text-muted-foreground">
@@ -163,8 +160,8 @@ export function SeleccionHorarioStep() {
               </p>
             </div>
           )}
- 
-          {/* Estado: error */}
+
+          {/* Error */}
           {estado === "error" && (
             <div className="px-6 pb-6">
               <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -172,9 +169,9 @@ export function SeleccionHorarioStep() {
               </div>
             </div>
           )}
- 
-          {/* Estado: éxito */}
-          {estado === "success" && oficinasDisponibles && oficinasDisponibles.length > 0 && (
+
+          {/* Éxito */}
+          {estado === "success" && oficinasDisponibles.length > 0 && (
             <>
               {oficinasDisponibles.map((oficina) => {
                 const schedules = oficina.schedules ?? [];
@@ -209,13 +206,18 @@ export function SeleccionHorarioStep() {
                         <tbody>
                           {(() => {
                             const filtered = schedules.filter(
-                              (s: ScheduleItem) => s.weekDay !== "DOMINGO" && s.scheduleHours.length > 0
+                              (s: ScheduleItem) =>
+                                s.weekDay !== "DOMINGO" &&
+                                s.scheduleHours.length > 0
                             );
 
                             if (filtered.length === 0) {
                               return (
                                 <tr>
-                                  <td colSpan={2} className="px-4 py-6 text-center text-sm text-slate-400 italic">
+                                  <td
+                                    colSpan={2}
+                                    className="px-4 py-6 text-center text-sm text-slate-400 italic"
+                                  >
                                     Sin turnos disponibles para esta sede
                                   </td>
                                 </tr>
@@ -241,7 +243,9 @@ export function SeleccionHorarioStep() {
                                     <div className="flex flex-wrap gap-2">
                                       {sorted.map((h) => {
                                         const nextHour = (() => {
-                                          const [hh, mm] = h.hour.split(":").map(Number);
+                                          const [hh, mm] = h.hour
+                                            .split(":")
+                                            .map(Number);
                                           const total = hh * 60 + mm + 20;
                                           return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
                                         })();
@@ -254,7 +258,9 @@ export function SeleccionHorarioStep() {
                                         return (
                                           <button
                                             key={h.hour}
-                                            onClick={() => handleSeleccionarHora(s, h.hour, oficina)}
+                                            onClick={() =>
+                                              handleSeleccionarHora(s, h.hour, oficina)
+                                            }
                                             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border
                                               ${
                                                 isSelected
@@ -279,7 +285,7 @@ export function SeleccionHorarioStep() {
                 );
               })}
 
-              {/* Error de validación */}
+              {/* Error validación */}
               {errorMensaje && (
                 <div className="mx-6 mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   {errorMensaje}
@@ -291,19 +297,37 @@ export function SeleccionHorarioStep() {
                 <div className="mx-6 mb-4 rounded-md bg-green-50 border border-green-200 px-4 py-2.5 text-sm text-green-800">
                   Seleccionado:{" "}
                   <span className="font-medium">
-                    {capDay(scheduleSelected.weekDay)} {formatDate(scheduleSelected.date)}
+                    {capDay(scheduleSelected.weekDay)}{" "}
+                    {formatDate(scheduleSelected.date)}
                   </span>{" "}
-                  a las <span className="font-medium">{horaSeleccionada}</span>
+                  a las{" "}
+                  <span className="font-medium">{horaSeleccionada}</span>
+                  {slotSeleccionadoOfficeId && (
+                    <>
+                      {" "}—{" "}
+                      <span className="font-medium">
+                        {
+                          oficinasDisponibles.find(
+                            (o) => o.officeId === slotSeleccionadoOfficeId
+                          )?.descriptionOffice
+                        }
+                      </span>
+                    </>
+                  )}
                 </div>
               )}
 
               {/* Botones */}
               <div className="flex flex-col gap-3 px-6 pb-6 sm:flex-row sm:justify-between">
-                <Button variant="outline" className="order-2 sm:order-1" onClick={() => setPasoActual(2)}>
+                <Button
+                  variant="outline"
+                  className="order-2 sm:order-1"
+                  onClick={() => setPasoActual(2)}
+                >
                   Volver
                 </Button>
                 <Button
-                  className="bg-cyan-400 hover:bg-cyan-500 text-white order-1 sm:order-2"
+                  className="bg-sky-600 hover:bg-sky-700 text-white order-1 sm:order-2"
                   disabled={!puedeContinuar}
                   onClick={handleContinuar}
                 >
@@ -312,16 +336,15 @@ export function SeleccionHorarioStep() {
               </div>
             </>
           )}
- 
+
           {/* Sin datos */}
-          {estado === "success" && !oficinaActual && (
+          {estado === "success" && oficinasDisponibles.length === 0 && (
             <div className="px-6 pb-6">
               <p className="text-sm text-muted-foreground">
-                No hay disponibilidad para la sede seleccionada.
+                No hay disponibilidad para la ciudad seleccionada.
               </p>
             </div>
           )}
- 
         </CardContent>
       </Card>
     </main>

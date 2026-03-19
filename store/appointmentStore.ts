@@ -1,18 +1,18 @@
 import { create } from "zustand";
-import type { CitaCreada, Sede } from "../lib/api";
-
+import type { CitaCreada, Sede, CityStructure } from "../lib/api";
+ 
 export type TipoTramite = {
   departmentId: number;
   subdepartmentId: number;
   departmentName: string;
   subdepartmentName: string;
 };
-
+ 
 export type SlotHorario = {
   date: string;
   hour: string;
 };
-
+ 
 export type DatosCliente = {
   name: string;
   documentType: string;
@@ -22,7 +22,7 @@ export type DatosCliente = {
   gender: string;
   typeNotify: "email" | "whatsapp";
 };
-
+ 
 type AppointmentState = {
   pasoActual: number;
   maxPasos: number;
@@ -30,14 +30,17 @@ type AppointmentState = {
   ciudadNombre?: string;
   ciudadDepartamentoId?: string;
   oficinas: Sede[];
+  estructura: CityStructure[];
   sedeSeleccionada?: Sede;
   tipoTramiteSeleccionado?: TipoTramite;
   slotSeleccionado?: SlotHorario;
   datosCliente?: DatosCliente;
   citaConfirmada?: CitaCreada;
+  // Actions
   setPasoActual: (paso: number) => void;
   setCiudad: (id: number, nombre: string, departamentoId: string) => void;
   setOficinas: (oficinas: Sede[]) => void;
+  setEstructura: (estructura: CityStructure[]) => void;
   setSede: (sede: Sede) => void;
   setTipoTramite: (tipo: TipoTramite) => void;
   setSlot: (slot: SlotHorario) => void;
@@ -45,11 +48,12 @@ type AppointmentState = {
   setCitaConfirmada: (cita: CitaCreada) => void;
   reset: () => void;
 };
-
+ 
 export const useAppointmentStore = create<AppointmentState>((set) => ({
   pasoActual: 1,
   maxPasos: 5,
   oficinas: [],
+  estructura: [],                                          // ← inicializado
   setPasoActual: (paso) => set({ pasoActual: paso }),
   setCiudad: (id, nombre, departamentoId) =>
     set({
@@ -58,6 +62,7 @@ export const useAppointmentStore = create<AppointmentState>((set) => ({
       ciudadDepartamentoId: departamentoId,
     }),
   setOficinas: (oficinas) => set({ oficinas }),
+  setEstructura: (estructura) => set({ estructura }),      // ← agregado
   setSede: (sede) => set({ sedeSeleccionada: sede }),
   setTipoTramite: (tipo) => set({ tipoTramiteSeleccionado: tipo }),
   setSlot: (slot) => set({ slotSeleccionado: slot }),
@@ -70,6 +75,7 @@ export const useAppointmentStore = create<AppointmentState>((set) => ({
       ciudadNombre: undefined,
       ciudadDepartamentoId: undefined,
       oficinas: [],
+      estructura: [],                                      // ← limpiado en reset
       sedeSeleccionada: undefined,
       tipoTramiteSeleccionado: undefined,
       slotSeleccionado: undefined,

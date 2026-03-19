@@ -2,17 +2,50 @@
 
 import { useEffect, useState } from "react";
 import { useAppointmentStore } from "../../store/appointmentStore";
-import {obtenerEstructuraCiudad, getApiErrorMessage,
+import {
+  obtenerEstructuraCiudad,
+  getApiErrorMessage,
   type CityStructure,
 } from "../../lib/api";
-import type { TipoTramite as TipoTramiteStore } from "../../store/appointmentStore";
+import {
+  TRAMITES_PREDETERMINADOS,
+  getTramitesAgrupados,
+  type TramiteOption,
+} from "../../lib/tramites";
 
 import { Card, CardContent } from "@/components/ui/card";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
 type EstadoCarga = "idle" | "loading" | "success" | "error";
-type TipoTramiteOption = TipoTramiteStore & { optionKey: string };
+
+function normalizarNombre(name: string): string {
+  return name.trim().toUpperCase().replace(/\.+$/, "").trim();
+}
+
+function buscarSubservicioPorNombre(
+  estructura: CityStructure[],
+  subserviceName: string
+): { sedeId: number; departmentId: number; subdepartmentId: number }[] {
+  const target = normalizarNombre(subserviceName);
+  const resultados: { sedeId: number; departmentId: number; subdepartmentId: number }[] = [];
+
+  for (const sede of estructura) {
+    for (const service of sede.services) {
+      for (const sub of service.subservices) {
+        if (normalizarNombre(sub.name) === target) {
+          resultados.push({
+            sedeId: sede.id,
+            departmentId: service.id,
+            subdepartmentId: sub.id,
+          });
+          break; // una coincidencia por sede
+        }
+      }
+    }
+  }
+
+  return resultados;
+}
 
 export function SeleccionSedeStep() {
   const {
@@ -20,19 +53,21 @@ export function SeleccionSedeStep() {
     tipoTramiteSeleccionado,
     setTipoTramite,
     setOficinas,
+    setEstructura,      // ← del store, para que ConfirmacionStep la use
     setPasoActual,
   } = useAppointmentStore();
 
-  const [opcionesTramite, setOpcionesTramite] = useState<TipoTramiteOption[]>([]);
+  // Estado local para la búsqueda en este componente
+  const [estructuraLocal, setEstructuraLocal] = useState<CityStructure[]>([]);
   const [estado, setEstado] = useState<EstadoCarga>("idle");
   const [errorMensaje, setErrorMensaje] = useState<string | null>(null);
-
-  const [optionKey, setOptionKey] = useState<string>(
-    tipoTramiteSeleccionado
-      ? `${tipoTramiteSeleccionado.departmentId}-${tipoTramiteSeleccionado.subdepartmentId}`
-      : ""
+  const [subserviceSeleccionado, setSubserviceSeleccionado] = useState<string>(
+    tipoTramiteSeleccionado?.subdepartmentName ?? ""
   );
 
+  const tramitesAgrupados = getTramitesAgrupados();
+
+  // ── Carga estructura de ciudad ───────────────────────────────────────────
   useEffect(() => {
     if (ciudadId == null) return;
 
@@ -43,46 +78,18 @@ export function SeleccionSedeStep() {
       setErrorMensaje(null);
 
       try {
-        const estructura: CityStructure[] = await obtenerEstructuraCiudad(
+        const data: CityStructure[] = await obtenerEstructuraCiudad(
           ciudadId,
           abort.signal
         );
 
         if (abort.signal.aborted) return;
 
-        // guardar oficinas en el store
-        const oficinas = estructura.map((b) => ({
-          id: b.id,
-          name: b.name,
-          direction: b.direction,
-        }));
-
-        setOficinas(oficinas);
-
-        if (estructura.length === 0) {
-          setOpcionesTramite([]);
-          setEstado("success");
-          return;
-        }
-
-        // construir opciones de trámite
-        const opciones: TipoTramiteOption[] = [];
-
-        estructura.forEach((branch) => {
-          branch.services.forEach((service) => {
-            service.subservices.forEach((sub) => {
-              opciones.push({
-                departmentId: service.id,
-                subdepartmentId: sub.id,
-                departmentName: service.name,
-                subdepartmentName: sub.name,
-                optionKey: `${service.id}-${sub.id}`,
-              });
-            });
-          });
-        });
-
-        setOpcionesTramite(opciones);
+        setEstructuraLocal(data);
+        setEstructura(data);
+        setOficinas(
+          data.map((b) => ({ id: b.id, name: b.name, direction: b.direction }))
+        );
         setEstado("success");
       } catch (err) {
         if (abort.signal.aborted) return;
@@ -92,30 +99,48 @@ export function SeleccionSedeStep() {
     };
 
     cargar();
-
     return () => abort.abort();
-  }, [ciudadId, setOficinas]);
+  }, [ciudadId, setOficinas, setEstructura]);
 
+  // ── Continuar ────────────────────────────────────────────────────────────
   const handleContinuar = () => {
-    const opcion = opcionesTramite.find((o) => o.optionKey === optionKey);
-
-    if (!opcion) {
+    if (!subserviceSeleccionado) {
       setErrorMensaje("Selecciona un tipo de trámite.");
       return;
     }
 
+    const resultados = buscarSubservicioPorNombre(estructuraLocal, subserviceSeleccionado);
+
+    if (resultados.length === 0) {
+      setErrorMensaje(
+        `No se encontró el trámite "${subserviceSeleccionado}" para esta ciudad.`
+      );
+      return;
+    }
+
+    const tramite = TRAMITES_PREDETERMINADOS.find(
+      (t) =>
+        normalizarNombre(t.subserviceName) ===
+        normalizarNombre(subserviceSeleccionado)
+    );
+
+    // resultados[0] suficiente — backend resuelve IDs por sede en /availability/offices/
+    const { departmentId, subdepartmentId } = resultados[0];
+
     setTipoTramite({
-      departmentId: opcion.departmentId,
-      subdepartmentId: opcion.subdepartmentId,
-      departmentName: opcion.departmentName,
-      subdepartmentName: opcion.subdepartmentName,
+      departmentId,
+      subdepartmentId,
+      departmentName: tramite?.serviceName ?? "",
+      subdepartmentName: subserviceSeleccionado,
     });
 
+    setErrorMensaje(null);
     setPasoActual(3);
   };
 
-  const puedeContinuar = Boolean(optionKey);
+  const puedeContinuar = Boolean(subserviceSeleccionado) && estado === "success";
 
+  // ── Render ───────────────────────────────────────────────────────────────
   return (
     <main className="bg-background p-4 md:p-8">
       <Card className="mx-auto max-w-4xl shadow-lg">
@@ -135,29 +160,31 @@ export function SeleccionSedeStep() {
               Tipo de trámite
             </label>
 
-            <Select
-              value={optionKey}
-              onValueChange={setOptionKey}
+            <select
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none ring-0 transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+              value={subserviceSeleccionado}
               disabled={estado === "loading"}
+              onChange={(e) => {
+                setSubserviceSeleccionado(e.target.value);
+                setErrorMensaje(null);
+              }}
             >
-              <SelectTrigger className="w-full border-primary/50 focus:border-primary">
-                <SelectValue
-                  placeholder={
-                    estado === "loading"
-                      ? "Cargando tipos de trámite..."
-                      : "Selecciona el trámite"
-                  }
-                />
-              </SelectTrigger>
+              <option value="">
+                {estado === "loading"
+                  ? "Cargando..."
+                  : "Seleccione un tipo de turno"}
+              </option>
 
-              <SelectContent>
-                {opcionesTramite.map((o) => (
-                  <SelectItem key={o.optionKey} value={o.optionKey}>
-                    {o.departmentName} → {o.subdepartmentName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {Object.entries(tramitesAgrupados).map(([serviceName, opciones]) => (
+                <optgroup key={serviceName} label={serviceName}>
+                  {opciones.map((op: TramiteOption) => (
+                    <option key={op.subserviceName} value={op.subserviceName}>
+                      {op.subserviceName}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
 
             {estado === "error" && errorMensaje && (
               <p className="text-xs text-destructive">{errorMensaje}</p>
@@ -184,7 +211,7 @@ export function SeleccionSedeStep() {
               disabled={!puedeContinuar}
               onClick={handleContinuar}
             >
-              Continuar a sede, fecha y hora
+              Continuar
             </Button>
           </div>
         </CardContent>

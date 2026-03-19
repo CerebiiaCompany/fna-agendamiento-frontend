@@ -5,8 +5,35 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useAppointmentStore } from "../../store/appointmentStore";
-import { crearCita, getApiErrorMessage } from "../../lib/api";
+import { crearCita, getApiErrorMessage, type CityStructure } from "../../lib/api";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper: busca departmentId y subdepartmentId exactos para la sede seleccionada
+// ─────────────────────────────────────────────────────────────────────────────
+function buscarIdsPorSede(
+  estructura: CityStructure[],
+  sedeId: number,
+  subserviceName: string
+): { departmentId: number; subdepartmentId: number } | null {
+  const target = subserviceName.trim().toUpperCase().replace(/\.+$/, "").trim();
+  const sede = estructura.find((s) => s.id === sedeId);
+
+  if (!sede) return null;
+
+  for (const service of sede.services) {
+    for (const sub of service.subservices) {
+      const normalizado = sub.name.trim().toUpperCase().replace(/\.+$/, "").trim();
+      if (normalizado === target) {
+        return { departmentId: service.id, subdepartmentId: sub.id };
+      }
+    }
+  }
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Componente
+// ─────────────────────────────────────────────────────────────────────────────
 export function ConfirmacionStep() {
   const {
     ciudadNombre,
@@ -15,6 +42,7 @@ export function ConfirmacionStep() {
     tipoTramiteSeleccionado,
     slotSeleccionado,
     citaConfirmada,
+    estructura,
     setCitaConfirmada,
     setPasoActual,
     reset,
@@ -43,16 +71,31 @@ export function ConfirmacionStep() {
       ? slotSeleccionado.hour.slice(0, 5)
       : slotSeleccionado.hour;
 
+  // ── Confirmar cita ────────────────────────────────────────────────────────
   const handleConfirmar = async () => {
     if (!captchaToken) {
       setErrorMensaje("Debes completar el captcha antes de confirmar.");
       return;
     }
 
+    // ✅ Busca en la sede específica que eligió el usuario
+    const ids = buscarIdsPorSede(
+      estructura,
+      sedeSeleccionada.id,  // ← sede donde eligió el horario
+      tipoTramiteSeleccionado.subdepartmentName
+    );
+
+    if (!ids) {
+      setErrorMensaje(
+        `No se encontró el trámite "${tipoTramiteSeleccionado.subdepartmentName}" para la sede ${sedeSeleccionada.name}.`
+      );
+      return;
+    }
+
     setEstado("loading");
     setErrorMensaje(null);
 
-    const datePetition = `${slotSeleccionado.date}T${horaNormalizada}:00`;
+    const datePetition = `${slotSeleccionado.date}T${horaNormalizada}`;
     const browserVersion =
       typeof navigator !== "undefined" ? navigator.userAgent : "FNA-Frontend";
 
@@ -64,7 +107,7 @@ export function ConfirmacionStep() {
         ciudad: (ciudadNombre ?? sedeSeleccionada.name).trim(),
         country: "Colombia",
         datePetition,
-        departmentId: String(tipoTramiteSeleccionado.departmentId),
+        departmentId: String(ids.departmentId),
         document: datosCliente.document,
         documentType: datosCliente.documentType,
         email: datosCliente.email,
@@ -75,7 +118,7 @@ export function ConfirmacionStep() {
         phone: datosCliente.phone,
         presenceType: "Presencial",
         sede: String(sedeSeleccionada.id),
-        subdepartmentId: String(tipoTramiteSeleccionado.subdepartmentId),
+        subdepartmentId: String(ids.subdepartmentId),
         typeNotify: datosCliente.typeNotify ?? "email",
         "g-recaptcha-response": captchaToken,
       };
@@ -91,6 +134,7 @@ export function ConfirmacionStep() {
 
   const cita = citaConfirmada;
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="grid gap-6 rounded-2xl border border-slate-100 bg-slate-50/60 p-6 sm:grid-cols-[1.1fr_1.2fr] sm:p-8">
       <div>
@@ -186,9 +230,9 @@ export function ConfirmacionStep() {
           {cita ? (
             <>
               <p className="mt-1 text-base font-semibold">¡La cita ha sido agendada!</p>
-
-              <p className="mt-2 text-xs font-medium">Recomendaciones al usuario: {cita.status}</p>
-
+              <p className="mt-2 text-xs font-medium">
+                Recomendaciones: {cita.status}
+              </p>
               <ul className="mt-3 list-disc space-y-1 pl-5 text-xs">
                 <li>Llega 10 minutos antes de la hora programada.</li>
                 <li>Lleva tu documento de identidad y los soportes del trámite.</li>
