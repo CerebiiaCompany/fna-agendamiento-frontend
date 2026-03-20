@@ -6,7 +6,6 @@ import { useAuthStore } from "../../store/authStore";
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
-  /** Si se indica, solo usuarios con este rol pueden ver la ruta. Si no, se redirige a /. */
   role?: "ADMIN";
 };
 

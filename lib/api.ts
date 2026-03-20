@@ -38,14 +38,14 @@ export type CityStructure = {
   services: Service[];
 };
  
-// Sede utilizada en el store y pasos del wizard
+
 export type Sede = {
   id: number;
   name: string;
   direction: string;
 };
  
-// Disponibilidad
+
 export type ScheduleHour = {
   hour: string;
 };
@@ -63,13 +63,13 @@ export type OfficeAvailability = {
   schedules: ScheduleItem[];
 };
  
-// Cita creada
+
 export type CitaCreada = {
   appointmentId: number;
   status: string;
 };
  
-// Payload subservice-id
+
 export type SubserviceIdPayload = {
   cityId: number;
   departmentId: number;
@@ -90,7 +90,6 @@ export type SubserviceIdResponse = {
 // API CALLS
 // =============================
  
-// Ciudades
 export async function obtenerCiudades(
   signal?: AbortSignal
 ): Promise<Ciudad[]> {
@@ -98,7 +97,6 @@ export async function obtenerCiudades(
   return data;
 }
  
-// Estructura completa de ciudad — sedes + servicios + subservicios
 export async function obtenerEstructuraCiudad(
   cityId: number,
   signal?: AbortSignal
@@ -110,8 +108,6 @@ export async function obtenerEstructuraCiudad(
   return data;
 }
  
-// Obtener subdepartmentId a partir del nombre del subservicio
-// Llama a POST /subservice-id/ y retorna el payload listo para disponibilidad
 export async function obtenerSubserviceId(
   payload: SubserviceIdPayload,
   signal?: AbortSignal
@@ -124,7 +120,6 @@ export async function obtenerSubserviceId(
   return data;
 }
  
-// Disponibilidad por oficinas
 export async function obtenerDisponibilidadPorOficinas(
   params: {
     cityId: number;
@@ -138,7 +133,6 @@ export async function obtenerDisponibilidadPorOficinas(
   return data;
 }
  
-// Crear cita
 export type CrearCitaPayload = {
   acepto: string;
   branchOfficeId: string;
@@ -171,6 +165,60 @@ export async function crearCita(
   });
   return data;
 }
+
+export type CitaActiva = {
+  id: number;
+  name: string | null;
+  date: string | null;
+  hour: string | null;
+  cityName: string | null;
+  branchOfficeId: number | null;
+  branchOfficeName: string | null;
+  branchOfficeDirection: string | null;
+  departmentId: number | null;
+  departmentName: string | null;
+  subdepartmentId: number | null;
+  subdepartmentName: string | null;
+  state: string | null;
+  document: string | null;
+  documentType: string | null;
+  email: string | null;
+  gender: string | null;
+  phone: string | null;
+  ip: string | null;
+  typeNotify: string | null;
+};
+ 
+export type ReagendarPayload = CrearCitaPayload;
+ 
+export type ReagendarResult = {
+  appointmentId: number;
+  status: string;
+};
+ 
+export async function obtenerCitasPorDocumento(
+  document: string,
+  signal?: AbortSignal
+): Promise<CitaActiva[]> {
+  const { data } = await api.get<CitaActiva[]>(`/by-document/${document}/`, {
+    signal,
+  });
+  return data;
+}
+ 
+export async function reagendarCita(
+  appointmentId: number,
+  payload: ReagendarPayload,
+  signal?: AbortSignal
+): Promise<ReagendarResult> {
+  const { data } = await api.patch<ReagendarResult>(
+    `/reschedule/${appointmentId}/`,
+    payload,
+    { signal }
+  );
+  return data;
+}
+ 
  
 // =============================
 // ERROR HELPER

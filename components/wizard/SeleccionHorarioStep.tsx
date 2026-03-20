@@ -79,7 +79,6 @@ export function SeleccionHorarioStep() {
     return () => abort.abort();
   }, [ciudadId, tipoTramiteSeleccionado]);
 
-  // ── Selección de hora ────────────────────────────────────────────────────
   const handleSeleccionarHora = (
     schedule: ScheduleItem,
     hora: string,
@@ -91,7 +90,6 @@ export function SeleccionHorarioStep() {
     setErrorMensaje(null);
   };
 
-  // ── Continuar ────────────────────────────────────────────────────────────
   const handleContinuar = () => {
     if (!scheduleSelected) {
       setErrorMensaje("Selecciona una fecha.");
@@ -108,7 +106,6 @@ export function SeleccionHorarioStep() {
       return;
     }
 
-    // Guardar la sede que corresponde al horario seleccionado por el usuario
     const sedeDelSlot = oficinas.find((o) => o.id === slotSeleccionadoOfficeId);
     if (sedeDelSlot) {
       setSede(sedeDelSlot);
@@ -124,7 +121,6 @@ export function SeleccionHorarioStep() {
 
   const puedeContinuar = Boolean(scheduleSelected && horaSeleccionada);
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
   const sortHours = (hours: { hour: string }[]) =>
     [...hours].sort((a, b) => a.hour.localeCompare(b.hour));
 
@@ -136,7 +132,6 @@ export function SeleccionHorarioStep() {
     return `${d}/${m}/${y}`;
   };
 
-  // ── Render ───────────────────────────────────────────────────────────────
   return (
     <main className="min-h-screen bg-background p-4 md:p-8">
       <Card className="mx-auto max-w-4xl shadow-md border border-slate-200 bg-white">

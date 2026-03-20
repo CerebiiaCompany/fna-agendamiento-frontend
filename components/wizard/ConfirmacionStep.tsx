@@ -7,9 +7,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { useAppointmentStore } from "../../store/appointmentStore";
 import { crearCita, getApiErrorMessage, type CityStructure } from "../../lib/api";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helper: busca departmentId y subdepartmentId exactos para la sede seleccionada
-// ─────────────────────────────────────────────────────────────────────────────
+
 function buscarIdsPorSede(
   estructura: CityStructure[],
   sedeId: number,
@@ -31,9 +29,7 @@ function buscarIdsPorSede(
   return null;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Componente
-// ─────────────────────────────────────────────────────────────────────────────
+
 export function ConfirmacionStep() {
   const {
     ciudadNombre,
@@ -71,17 +67,17 @@ export function ConfirmacionStep() {
       ? slotSeleccionado.hour.slice(0, 5)
       : slotSeleccionado.hour;
 
-  // ── Confirmar cita ────────────────────────────────────────────────────────
+
   const handleConfirmar = async () => {
     if (!captchaToken) {
       setErrorMensaje("Debes completar el captcha antes de confirmar.");
       return;
     }
 
-    // ✅ Busca en la sede específica que eligió el usuario
+
     const ids = buscarIdsPorSede(
       estructura,
-      sedeSeleccionada.id,  // ← sede donde eligió el horario
+      sedeSeleccionada.id,
       tipoTramiteSeleccionado.subdepartmentName
     );
 
@@ -134,7 +130,6 @@ export function ConfirmacionStep() {
 
   const cita = citaConfirmada;
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="grid gap-6 rounded-2xl border border-slate-100 bg-slate-50/60 p-6 sm:grid-cols-[1.1fr_1.2fr] sm:p-8">
       <div>

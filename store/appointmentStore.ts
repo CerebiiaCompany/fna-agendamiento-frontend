@@ -53,7 +53,7 @@ export const useAppointmentStore = create<AppointmentState>((set) => ({
   pasoActual: 1,
   maxPasos: 5,
   oficinas: [],
-  estructura: [],                                          // ← inicializado
+  estructura: [],
   setPasoActual: (paso) => set({ pasoActual: paso }),
   setCiudad: (id, nombre, departamentoId) =>
     set({
@@ -75,7 +75,7 @@ export const useAppointmentStore = create<AppointmentState>((set) => ({
       ciudadNombre: undefined,
       ciudadDepartamentoId: undefined,
       oficinas: [],
-      estructura: [],                                      // ← limpiado en reset
+      estructura: [],
       sedeSeleccionada: undefined,
       tipoTramiteSeleccionado: undefined,
       slotSeleccionado: undefined,

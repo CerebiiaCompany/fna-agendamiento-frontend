@@ -38,7 +38,7 @@ function buscarSubservicioPorNombre(
             departmentId: service.id,
             subdepartmentId: sub.id,
           });
-          break; // una coincidencia por sede
+          break;
         }
       }
     }
@@ -53,11 +53,10 @@ export function SeleccionSedeStep() {
     tipoTramiteSeleccionado,
     setTipoTramite,
     setOficinas,
-    setEstructura,      // ← del store, para que ConfirmacionStep la use
+    setEstructura, 
     setPasoActual,
   } = useAppointmentStore();
 
-  // Estado local para la búsqueda en este componente
   const [estructuraLocal, setEstructuraLocal] = useState<CityStructure[]>([]);
   const [estado, setEstado] = useState<EstadoCarga>("idle");
   const [errorMensaje, setErrorMensaje] = useState<string | null>(null);
@@ -67,7 +66,7 @@ export function SeleccionSedeStep() {
 
   const tramitesAgrupados = getTramitesAgrupados();
 
-  // ── Carga estructura de ciudad ───────────────────────────────────────────
+
   useEffect(() => {
     if (ciudadId == null) return;
 
@@ -102,7 +101,6 @@ export function SeleccionSedeStep() {
     return () => abort.abort();
   }, [ciudadId, setOficinas, setEstructura]);
 
-  // ── Continuar ────────────────────────────────────────────────────────────
   const handleContinuar = () => {
     if (!subserviceSeleccionado) {
       setErrorMensaje("Selecciona un tipo de trámite.");
@@ -124,7 +122,6 @@ export function SeleccionSedeStep() {
         normalizarNombre(subserviceSeleccionado)
     );
 
-    // resultados[0] suficiente — backend resuelve IDs por sede en /availability/offices/
     const { departmentId, subdepartmentId } = resultados[0];
 
     setTipoTramite({
@@ -140,7 +137,6 @@ export function SeleccionSedeStep() {
 
   const puedeContinuar = Boolean(subserviceSeleccionado) && estado === "success";
 
-  // ── Render ───────────────────────────────────────────────────────────────
   return (
     <main className="bg-background p-4 md:p-8">
       <Card className="mx-auto max-w-4xl shadow-lg">

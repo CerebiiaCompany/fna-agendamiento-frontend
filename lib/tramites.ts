@@ -1,10 +1,7 @@
-// lib/tramites.ts
-// Lista predeterminada de trámites agrupados por servicio.
-// Los nombres deben coincidir (normalizados) con los que devuelve la API.
 
 export type TramiteOption = {
-  serviceName: string;   // nombre del servicio padre (encabezado del grupo)
-  subserviceName: string; // nombre del subservicio (opción seleccionable)
+  serviceName: string;
+  subserviceName: string;
 };
 
 export const TRAMITES_PREDETERMINADOS: TramiteOption[] = [
@@ -27,7 +24,6 @@ export const TRAMITES_PREDETERMINADOS: TramiteOption[] = [
   { serviceName: "CERTIFICACIONES, SALDOS Y FACTURA", subserviceName: "CERTIFICACIONES, SALDOS Y FACTURA" },
 ];
 
-// Agrupa los trámites por serviceName para renderizar <optgroup>
 export function getTramitesAgrupados(): Record<string, TramiteOption[]> {
   return TRAMITES_PREDETERMINADOS.reduce((acc, tramite) => {
     if (!acc[tramite.serviceName]) {
