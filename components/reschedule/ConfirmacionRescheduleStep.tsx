@@ -40,7 +40,7 @@ export function ConfirmacionRescheduleStep() {
         browserVersion: navigator.userAgent.slice(0, 200),
         ciudad: String(citaActiva.cityName ?? ""),
         country: "Colombia",
-        datePetition: nuevoSlot.date,
+        datePetition: `${nuevoSlot.date}T${nuevoSlot.hour}`,
         departmentId: String(citaActiva.subdepartmentId ?? ""),
         document: citaActiva.document ?? "",
         documentType: citaActiva.documentType ?? "",
@@ -54,7 +54,7 @@ export function ConfirmacionRescheduleStep() {
         sede: String(nuevaOficinaId),
         subdepartmentId: String(citaActiva.departmentId ?? ""),
         typeNotify: citaActiva.typeNotify ?? "email",
-        };
+    };
 
       const result = await reagendarCita(citaActiva.id, payload);
       setResultado(result);
