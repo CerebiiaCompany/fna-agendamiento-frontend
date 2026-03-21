@@ -1,11 +1,11 @@
 "use client";
 
 import { Stepper } from "../../components/ui/stepper";
-import { SeleccionCiudadStep } from "../../components/wizard/SeleccionCiudadStep";
-import { SeleccionSedeStep } from "../../components/wizard/SeleccionSedeStep";
-import { SeleccionHorarioStep } from "../../components/wizard/SeleccionHorarioStep";
-import { DatosClienteStep } from "../../components/wizard/DatosClienteStep";
-import { ConfirmacionStep } from "../../components/wizard/ConfirmacionStep";
+import { SeleccionCiudadStep } from "../../components/scheduling/SeleccionCiudadStep";
+import { SeleccionSedeStep } from "../../components/scheduling/SelectServiceStep";
+import { SeleccionHorarioStep } from "../../components/scheduling/SeleccionHorarioStep";
+import { DatosClienteStep } from "../../components/scheduling/DatosClienteStep";
+import { ConfirmacionStep } from "../../components/scheduling/ConfirmacionStep";
 import { useAppointmentStore } from "../../store/appointmentStore";
 import { ProtectedRoute } from "../../components/auth/ProtectedRoute";
 
@@ -33,8 +33,7 @@ export default function Home() {
               Agendamiento de citas
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              Completa los pasos para reservar tu cita en la sede de tu
-              preferencia.
+              Completa los pasos para reservar la cita.
             </p>
           </div>
         </header>

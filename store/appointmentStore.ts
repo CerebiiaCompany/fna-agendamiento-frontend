@@ -20,7 +20,7 @@ export type DatosCliente = {
   email: string;
   phone: string;
   gender: string;
-  typeNotify: "email" | "whatsapp";
+  typeNotify: "email";
 };
  
 type AppointmentState = {

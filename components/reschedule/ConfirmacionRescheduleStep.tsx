@@ -53,7 +53,7 @@ export function ConfirmacionRescheduleStep() {
         presenceType: "Presencial",
         sede: String(nuevaOficinaId),
         subdepartmentId: String(citaActiva.departmentId ?? ""),
-        typeNotify: citaActiva.typeNotify ?? "email",
+        typeNotify: "email",
     };
 
       const result = await reagendarCita(citaActiva.id, payload);
@@ -116,7 +116,6 @@ export function ConfirmacionRescheduleStep() {
             </p>
           </div>
 
-          {/* Cita original */}
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
               Cita actual
@@ -135,10 +134,8 @@ export function ConfirmacionRescheduleStep() {
             </div>
           </div>
 
-          {/* Flecha */}
           <div className="text-center text-slate-300 text-lg">↓</div>
 
-          {/* Nuevo horario */}
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-sky-500">
               Nuevo horario
@@ -159,7 +156,6 @@ export function ConfirmacionRescheduleStep() {
             </div>
           </div>
 
-          {/* Error */}
           {error && (
             <div className="flex gap-2 items-start rounded-md border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
               <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
@@ -167,7 +163,6 @@ export function ConfirmacionRescheduleStep() {
             </div>
           )}
 
-          {/* Botones */}
           <div className="flex justify-between pt-2">
             <Button
               variant="outline"

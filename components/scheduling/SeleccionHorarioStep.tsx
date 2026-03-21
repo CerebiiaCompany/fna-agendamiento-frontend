@@ -133,7 +133,7 @@ export function SeleccionHorarioStep() {
   };
 
   return (
-    <main className="min-h-screen bg-background p-4 md:p-8">
+    <main className="bg-background p-4 md:p-8">
       <Card className="mx-auto max-w-4xl shadow-md border border-slate-200 bg-white">
         <CardContent className="p-0 overflow-hidden rounded-xl">
 
@@ -312,7 +312,6 @@ export function SeleccionHorarioStep() {
                 </div>
               )}
 
-              {/* Botones */}
               <div className="flex flex-col gap-3 px-6 pb-6 sm:flex-row sm:justify-between">
                 <Button
                   variant="outline"
@@ -322,7 +321,7 @@ export function SeleccionHorarioStep() {
                   Volver
                 </Button>
                 <Button
-                  className="bg-sky-600 hover:bg-sky-700 text-white order-1 sm:order-2"
+                  className="order-1 sm:order-2 inline-flex items-center justify-center rounded-xl bg-sky-600 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-400/40 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300"
                   disabled={!puedeContinuar}
                   onClick={handleContinuar}
                 >

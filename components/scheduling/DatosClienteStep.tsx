@@ -12,7 +12,7 @@ const schema = z.object({
   email: z.string().min(1, "El correo es obligatorio").email("Correo electrónico válido"),
   phone: z.string().min(7, "Celular válido").max(20, "Número demasiado largo"),
   gender: z.string().min(1, "Selecciona género"),
-  typeNotify: z.enum(["email", "whatsapp"], { error: "Selecciona cómo recibir la confirmación" }),
+  typeNotify: z.literal("email"),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -20,19 +20,14 @@ type FormValues = z.infer<typeof schema>;
 const tiposDocumento = [
   { value: "CC", label: "Cédula de ciudadanía" },
   { value: "CE", label: "Cédula de extranjería" },
-  { value: "TI", label: "Tarjeta de identidad" },
   { value: "PP", label: "Pasaporte" },
+  { value: "NIT", label: "Número de Identificación Tributaria" },
 ];
 
 const generos = [
   { value: "Masculino", label: "Masculino" },
   { value: "Femenino", label: "Femenino" },
   { value: "Otro", label: "Otro" },
-];
-
-const tiposNotificacion = [
-  { value: "email", label: "Correo electrónico" },
-  { value: "whatsapp", label: "WhatsApp" },
 ];
 
 export function DatosClienteStep() {
@@ -52,7 +47,7 @@ export function DatosClienteStep() {
           email: datosCliente.email,
           phone: datosCliente.phone,
           gender: datosCliente.gender,
-          typeNotify: datosCliente.typeNotify ?? "email",
+          typeNotify: "email",
         }
       : { typeNotify: "email" },
   });
@@ -65,7 +60,7 @@ export function DatosClienteStep() {
       email: values.email,
       phone: values.phone,
       gender: values.gender,
-      typeNotify: values.typeNotify,
+      typeNotify: "email",
     });
     setPasoActual(5);
   };
@@ -164,18 +159,13 @@ export function DatosClienteStep() {
       </div>
 
       <div className="sm:col-span-2">
-        <label className="block text-sm font-medium text-slate-700">Confirmación por</label>
-        <select
-          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none ring-0 transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
-          {...register("typeNotify")}
-        >
-          {tiposNotificacion.map((t) => (
-            <option key={t.value} value={t.value}>{t.label}</option>
-          ))}
-        </select>
-        {errors.typeNotify && (
-          <p className="mt-1 text-xs text-red-600">{errors.typeNotify.message}</p>
-        )}
+        <label className="block text-sm font-medium text-slate-700">
+          Confirmación
+        </label>
+
+        <div className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+          El cliente recibirá la confirmación por <span className="font-medium text-slate-800">correo electrónico</span>
+        </div>
       </div>
 
       <div className="mt-2 flex w-full items-center justify-between sm:col-span-2">

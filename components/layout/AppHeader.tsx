@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { usePathname } from "next/navigation"
 import Image from "next/image"
@@ -17,7 +16,6 @@ const ALL_NAV_LINKS: NavLink[] = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/scheduling", label: "Agendar citas" },
   { href: "/reschedule", label: "Reagendar citas" },
-  { href: "/cancelar", label: "Cancelar citas" },
   { href: "/register", label: "Registrar usuarios", adminOnly: true },
   { href: "/auditorias", label: "Auditorías" },
 ];
@@ -36,35 +34,34 @@ export function AppHeader() {
     : [];
 
   return (
-      <header className="sticky top-0 z-50 w-full bg-linear-to-b from-blue-50 to-transparent backdrop-blur py-4">
-        <div className="mx-auto px-6">
-          <div className="grid grid-cols-3 items-center">
-            <div className="justify-self-start">
-              <Link href="/" className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-full overflow-hidden shadow-lg shadow-blue-500/20">
-                  <Image
-                    src="/logoHappy.jpeg"
-                    alt="Logo"
-                    width={50}
-                    height={50}
-                    className="object-cover"
-                  />
-                </div>
-                <span className="text-xl font-bold text-gray-900">
-                  FNA Agendamiento
-                </span>
-              </Link>
-            </div>
+      <header className="sticky top-0 z-50 w-full bg-linear-to-b from-blue-50 to-transparent py-6 backdrop-blur">
+        <div className="max-w-screen-2xl mx-auto px-4">
+          <div className="grid grid-cols-3 items-center w-full">
+
+            <Link href="/" className="flex items-center gap-2 z-10">
+              <div className="w-10 h-10 rounded-full overflow-hidden shadow-lg shadow-blue-500/20">
+                <Image
+                  src="/logoHappy.jpeg"
+                  alt="Logo"
+                  width={50}
+                  height={50}
+                  className="object-cover"
+                />
+              </div>
+              <span className="text-xl font-bold text-gray-900">
+                FNA Agendamiento
+              </span>
+            </Link>
 
             {isHydrated && user && (
-              <div className="w-full flex justify-center">
-                <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm rounded-full border border-gray-200 px-3 py-3 shadow-sm">
-                  
-                  {navLinks.map((link, i) => (
+              <div className="hidden navbar:flex items-center justify-center">
+                <div className="flex items-center bg-white rounded-full border border-gray-200 p-1 shadow-sm gap-0.5">
+
+                  {navLinks.map((link) => (
                     <Link
                       key={`${link.href}-${link.label}`}
                       href={link.href}
-                      className={`flex-1 text-center my-1 px-2 py-2 text-sm font-medium rounded-full transition-all duration-300 ease-in-out whitespace-nowrap ${
+                      className={`px-3 py-1.5 text-md font-medium rounded-full transition-all whitespace-nowrap ${
                         pathname === link.href
                           ? "bg-blue-600 text-white shadow-md"
                           : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
@@ -78,9 +75,8 @@ export function AppHeader() {
               </div>
             )}
 
-            {/* RIGHT - USER */}
             {isHydrated && user && (
-              <div className="justify-self-end hidden md:flex items-center gap-3">
+              <div className="hidden navbar:flex items-center gap-3 z-10 justify-end">
                 <span className="text-sm text-gray-700">
                   {user.document_number}
                   {user.role && (
@@ -91,75 +87,89 @@ export function AppHeader() {
                 <button
                   type="button"
                   onClick={() => logout()}
-                  className="rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 shadow-lg shadow-blue-500/25"
+                  className="bg-blue-600 text-white hover:bg-blue-500 rounded-full px-4 py-2 text-sm font-medium shadow-lg shadow-blue-500/25"
                 >
                   Cerrar sesión
                 </button>
               </div>
             )}
 
-            {/* MOBILE BUTTON */}
             {isHydrated && user && (
-              <div className="justify-self-end md:hidden">
+              <div className="navbar:hidden flex justify-end col-start-3">
                 <button
-                  type="button"
-                  onClick={() => setMobileOpen(true)}
-                  className="flex size-10 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100"
+                  onClick={() => setMobileOpen(!mobileOpen)}
+                  className="relative w-10 h-10 flex flex-col items-center justify-center gap-1.5 rounded-full bg-white border border-gray-200 shadow-sm z-10"
+                  aria-label={mobileOpen ? "Cerrar menu" : "Abrir menu"}
                 >
-                  <Menu className="size-5" />
+                  <span className={`w-5 h-0.5 bg-gray-700 rounded-full transition-all duration-300 ${mobileOpen ? "rotate-45 translate-y-2" : ""}`} />
+                  <span className={`w-5 h-0.5 bg-gray-700 rounded-full transition-all duration-300 ${mobileOpen ? "opacity-0 scale-0" : ""}`} />
+                  <span className={`w-5 h-0.5 bg-gray-700 rounded-full transition-all duration-300 ${mobileOpen ? "-rotate-45 -translate-y-2" : ""}`} />
                 </button>
               </div>
             )}
           </div>
         </div>
 
-        {/* MOBILE MENU (igual que el tuyo) */}
         {mobileOpen && (
-          <>
-            <div
-              className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:hidden"
-              onClick={() => setMobileOpen(false)}
-            />
-            <div className="fixed right-0 top-0 z-50 h-full w-[300px] border-l border-gray-200 bg-white shadow-xl md:hidden">
-              <div className="flex h-16 items-center justify-between border-b px-4">
-                <span className="text-lg font-semibold text-gray-900">
-                  Menú
-                </span>
-                <button onClick={() => setMobileOpen(false)}>
-                  <X className="size-5" />
-                </button>
-              </div>
+          <div
+            className={`navbar:hidden <div className="fixed inset-0 z-[100] flex items-center justify-center ${
+              mobileOpen
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 -translate-y-4 pointer-events-none"
+            }`}
+            style={{ backgroundColor: 'white' }}
+          >
+            <div className="h-full flex flex-col px-6 py-8">
 
-              <nav className="mt-6 flex flex-col gap-1 px-4">
-                {navLinks.map((link) => (
+              <div className="flex-1 flex flex-col gap-2">
+                {navLinks.map((link, i) => (
                   <Link
                     key={`${link.href}-${link.label}`}
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
-                    className="rounded-lg px-3 py-2.5 text-base font-medium text-gray-600 hover:bg-gray-100"
+                    className={`px-5 py-4 rounded-2xl text-lg font-medium transition-all duration-300 ${
+                      pathname === link.href
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                    style={{
+                      transitionDelay: mobileOpen ? `${i * 50}ms` : "0ms",
+                      opacity: mobileOpen ? 1 : 0,
+                      transform: mobileOpen
+                        ? "translateX(0)"
+                        : "translateX(-20px)",
+                    }}
                   >
                     {link.label}
                   </Link>
                 ))}
+              </div>
 
-                <div className="mt-4 flex flex-col gap-2 border-t pt-4">
-                  <p className="px-3 text-xs text-gray-400">
-                    {user?.document_number} ({user?.role})
-                  </p>
+              <div
+                className="pt-6 border-t border-gray-100 space-y-3"
+                style={{
+                  transitionDelay: mobileOpen ? "200ms" : "0ms",
+                  opacity: mobileOpen ? 1 : 0,
+                  transform: mobileOpen ? "translateY(0)" : "translateY(20px)",
+                  transition: "all 0.3s ease-out",
+                }}
+              >
+                <p className="text-sm text-gray-500">
+                  {user?.document_number} ({user?.role})
+                </p>
 
-                  <button
-                    onClick={() => {
-                      logout()
-                      setMobileOpen(false)
-                    }}
-                    className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
-                  >
-                    Cerrar sesión
-                  </button>
-                </div>
-              </nav>
+                <button
+                  onClick={() => {
+                    logout()
+                    setMobileOpen(false)
+                  }}
+                  className="w-full h-14 bg-linear-to-r from-blue-600 to-cyan-500 text-white rounded-2xl text-base font-medium shadow-lg shadow-blue-500/25"
+                >
+                  Cerrar sesión
+                </button>
+              </div>
             </div>
-          </>
+          </div>
         )}
       </header>
   );

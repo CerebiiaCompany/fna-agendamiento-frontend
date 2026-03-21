@@ -85,6 +85,61 @@ export type SubserviceIdResponse = {
   startDate: string;
   subdepartmentId: number;
 };
+
+export type CrearCitaPayload = {
+  acepto: string;
+  branchOfficeId: string;
+  browserVersion: string;
+  ciudad: string;
+  country: string;
+  datePetition: string;
+  departmentId: string;
+  document: string;
+  documentType: string;
+  email: string;
+  gender: string;
+  hour: string;
+  ip: string;
+  name: string;
+  phone: string;
+  presenceType: string;
+  sede: string;
+  subdepartmentId: string;
+  typeNotify: string;
+  "g-recaptcha-response"?: string;
+};
+
+export type CitaActiva = {
+  id: number;
+  name: string | null;
+  date: string | null;
+  hour: string | null;
+  cityName: string | null;
+  branchOfficeId: number | null;
+  branchOfficeName: string | null;
+  branchOfficeDirection: string | null;
+  departmentId: number | null;
+  departmentName: string | null;
+  subdepartmentId: number | null;
+  subdepartmentName: string | null;
+  state: string | null;
+  document: string | null;
+  documentType: string | null;
+  email: string | null;
+  gender: string | null;
+  phone: string | null;
+  ip: string | null;
+  typeNotify: string | null;
+};
+
+export type ReagendarPayload = CrearCitaPayload;
+ 
+export type ReagendarResult = {
+  appointmentId: number;
+  status: string;
+};
+
+export type Estado = "idle" | "loading" | "success" | "error";
  
 // =============================
 // API CALLS
@@ -133,29 +188,6 @@ export async function obtenerDisponibilidadPorOficinas(
   return data;
 }
  
-export type CrearCitaPayload = {
-  acepto: string;
-  branchOfficeId: string;
-  browserVersion: string;
-  ciudad: string;
-  country: string;
-  datePetition: string;
-  departmentId: string;
-  document: string;
-  documentType: string;
-  email: string;
-  gender: string;
-  hour: string;
-  ip: string;
-  name: string;
-  phone: string;
-  presenceType: string;
-  sede: string;
-  subdepartmentId: string;
-  typeNotify: string;
-  "g-recaptcha-response"?: string;
-};
- 
 export async function crearCita(
   payload: CrearCitaPayload,
   signal?: AbortSignal
@@ -165,36 +197,6 @@ export async function crearCita(
   });
   return data;
 }
-
-export type CitaActiva = {
-  id: number;
-  name: string | null;
-  date: string | null;
-  hour: string | null;
-  cityName: string | null;
-  branchOfficeId: number | null;
-  branchOfficeName: string | null;
-  branchOfficeDirection: string | null;
-  departmentId: number | null;
-  departmentName: string | null;
-  subdepartmentId: number | null;
-  subdepartmentName: string | null;
-  state: string | null;
-  document: string | null;
-  documentType: string | null;
-  email: string | null;
-  gender: string | null;
-  phone: string | null;
-  ip: string | null;
-  typeNotify: string | null;
-};
- 
-export type ReagendarPayload = CrearCitaPayload;
- 
-export type ReagendarResult = {
-  appointmentId: number;
-  status: string;
-};
  
 export async function obtenerCitasPorDocumento(
   document: string,
@@ -219,6 +221,12 @@ export async function reagendarCita(
   return data;
 }
  
+export async function cancelarCita(
+  appointmentId: number,
+  signal?: AbortSignal
+): Promise<void> {
+  await api.delete(`/cancel/${appointmentId}/`, { signal });
+}
  
 // =============================
 // ERROR HELPER

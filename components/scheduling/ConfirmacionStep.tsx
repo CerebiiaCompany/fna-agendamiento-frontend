@@ -115,7 +115,7 @@ export function ConfirmacionStep() {
         presenceType: "Presencial",
         sede: String(sedeSeleccionada.id),
         subdepartmentId: String(ids.subdepartmentId),
-        typeNotify: datosCliente.typeNotify ?? "email",
+        typeNotify: "email",
         "g-recaptcha-response": captchaToken,
       };
 
@@ -134,7 +134,7 @@ export function ConfirmacionStep() {
     <div className="grid gap-6 rounded-2xl border border-slate-100 bg-slate-50/60 p-6 sm:grid-cols-[1.1fr_1.2fr] sm:p-8">
       <div>
         <h2 className="text-lg font-semibold text-slate-900">
-          Revisa y confirma los datos de tu cita
+          Revisa y confirma los datos de la cita
         </h2>
         <p className="mt-1 text-sm text-slate-500">
           Verifica que toda la información esté correcta antes de confirmar.
@@ -226,7 +226,7 @@ export function ConfirmacionStep() {
             <>
               <p className="mt-1 text-base font-semibold">¡La cita ha sido agendada!</p>
               <p className="mt-2 text-xs font-medium">
-                Recomendaciones: {cita.status}
+                Recomendaciones al cliente:
               </p>
               <ul className="mt-3 list-disc space-y-1 pl-5 text-xs">
                 <li>Llega 10 minutos antes de la hora programada.</li>
@@ -236,7 +236,7 @@ export function ConfirmacionStep() {
             </>
           ) : (
             <p className="mt-1 text-xs">
-              Al confirmar se generará tu cita en el sistema del FNA.
+              Al confirmar se generará la cita en el sistema del FNA.
             </p>
           )}
         </div>
@@ -245,7 +245,7 @@ export function ConfirmacionStep() {
           <div className="mt-4 flex justify-end">
             <button
               type="button"
-              className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-400/40 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300"
               onClick={() => reset()}
             >
               Agendar otra cita

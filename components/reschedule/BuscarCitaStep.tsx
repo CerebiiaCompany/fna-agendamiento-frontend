@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { useRescheduleStore } from "../../store/rescheduleStore";
-import { obtenerCitasPorDocumento, getApiErrorMessage, type CitaActiva } from "../../lib/api";
+import { obtenerCitasPorDocumento, getApiErrorMessage, type CitaActiva, type Estado } from "../../lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, Calendar, Clock, MapPin, ChevronRight } from "lucide-react";
-
-type Estado = "idle" | "loading" | "success" | "error";
+import { Search, Calendar, Clock, MapPin, ChevronRight, AlertTriangle, CheckCircle } from "lucide-react";
+import { cancelarCita } from "@/lib/api"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogTrigger, } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 function formatFecha(date: string | null) {
   if (!date) return "—";
@@ -23,28 +24,53 @@ export function BuscarCitaStep() {
   const [error, setError] = useState<string | null>(null);
   const [citas, setCitas] = useState<CitaActiva[]>([]);
   const [citaElegida, setCitaElegida] = useState<CitaActiva | null>(null);
-
+  const [cancelando, setCancelando] = useState(false);
+  const [modalExito, setModalExito] = useState(false);
+  const [modal, setModal] = useState({
+    open: false,
+    title: "",
+    description: "",
+  });
+  
   const buscar = async () => {
     if (!documento.trim()) {
       setError("Ingresa tu número de documento.");
       return;
     }
+
+    const doc = documento.trim();
+    setDocumento("");
+
     setEstado("loading");
     setError(null);
-    setCitas([]);
     setCitaElegida(null);
 
     try {
-      const data = await obtenerCitasPorDocumento(documento.trim());
+      const data = await obtenerCitasPorDocumento(doc);
+
       if (data.length === 0) {
         setError("No se encontraron citas activas para este documento.");
         setEstado("error");
         return;
       }
+
       setCitas(data);
       setEstado("success");
+
     } catch (e) {
-      setError(getApiErrorMessage(e));
+      const msg = getApiErrorMessage(e);
+
+      if (msg.includes("No tienes cita activa")) {
+        setModal({
+          open: true,
+          title: "Sin cita activa",
+          description: "No encontramos una cita activa asociada a este documento.",
+        });
+        setEstado("idle");
+        return;
+      }
+
+      setError(msg);
       setEstado("error");
     }
   };
@@ -58,22 +84,45 @@ export function BuscarCitaStep() {
     setPaso(2);
   };
 
+  const handleCancelar = async () => {
+    if (!citaElegida) return;
+
+    try {
+      setCancelando(true);
+
+      await cancelarCita(citaElegida.id);
+
+      setCitas((prev) => prev.filter(c => c.id !== citaElegida.id));
+      setCitaElegida(null);
+
+      setCancelando(false);
+
+      setTimeout(() => {
+        setModalExito(true);
+      }, 200);
+
+    } catch (e) {
+      setCancelando(false);
+      setError(getApiErrorMessage(e));
+      setEstado("error");
+    }
+  };
+
   return (
+    <>
     <main className="bg-background p-4 md:p-8">
       <Card className="mx-auto shadow-md border border-slate-200 bg-white">
         <CardContent className="p-6 sm:p-8 space-y-6">
 
-          {/* Header */}
           <div>
             <h2 className="text-xl font-semibold text-slate-900">
               Consultar cita activa
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Ingresa tu número de identificación para buscar la cita que desea reagendar.
+              Ingresa el número de identificación para buscar la cita.
             </p>
           </div>
 
-          {/* Buscador */}
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -89,20 +138,18 @@ export function BuscarCitaStep() {
             <Button
               onClick={buscar}
               disabled={estado === "loading"}
-              className="bg-sky-600 hover:bg-sky-700 text-white rounded-xl px-5"
+              className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-6 py-5 text-sm font-semibold text-white shadow-sm shadow-sky-400/40 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300"
             >
               {estado === "loading" ? "Buscando..." : "Buscar"}
             </Button>
           </div>
 
-          {/* Error */}
           {error && (
             <div className="rounded-md border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
               {error}
             </div>
           )}
 
-          {/* Lista de citas */}
           {estado === "success" && citas.length > 0 && (
             <div className="space-y-3">
               <p className="text-sm font-medium text-slate-700">
@@ -112,7 +159,6 @@ export function BuscarCitaStep() {
               </p>
 
               {citas.map((cita) => {
-                console.log(citas)
                 const seleccionada = citaElegida?.id === cita.id;
                 return (
                   <button
@@ -127,23 +173,19 @@ export function BuscarCitaStep() {
                     <div className="flex items-start justify-between gap-3">
                         <div className="space-y-2 flex-1">
 
-                            {/* Nombre */}
                             <p className="text-sm font-semibold text-slate-800">{cita.name}</p>
 
-                            {/* Ciudad y sede */}
                             <div className="flex items-center gap-1.5 text-xs text-slate-600">
                             <MapPin className="w-3 h-3 text-sky-500 shrink-0" />
                             <span>{cita.cityName} — {cita.branchOfficeName}</span>
                             </div>
 
-                            {/* Dirección */}
                             {cita.branchOfficeDirection && (
                             <p className="text-xs text-slate-400 leading-snug pl-4">
                                 {cita.branchOfficeDirection}
                             </p>
                             )}
 
-                            {/* Servicio / Subservicio */}
                             <div className="flex flex-wrap gap-1.5 pl-0">
                             <span className="text-xs bg-sky-50 text-sky-700 px-2 py-0.5 rounded-full">
                                 {cita.subdepartmentName}
@@ -153,7 +195,6 @@ export function BuscarCitaStep() {
                             </span>
                             </div>
 
-                            {/* Fecha y hora */}
                             <div className="flex items-center gap-3 text-xs text-slate-600">
                             <span className="flex items-center gap-1">
                                 <Calendar className="w-3 h-3 text-sky-500" />
@@ -167,7 +208,6 @@ export function BuscarCitaStep() {
                             )}
                             </div>
 
-                            {/* Estado */}
                             <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${
                             cita.state === "Confirmada"
                                 ? "bg-green-100 text-green-700"
@@ -185,15 +225,70 @@ export function BuscarCitaStep() {
                 );
               })}
 
-              {/* Continuar */}
-              <div className="pt-2 flex justify-end">
+              <div className="pt-2 flex justify-end gap-2">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      disabled={!citaElegida}
+                      className="inline-flex items-center justify-center rounded-xl bg-red-600 px-6 py-4 text-sm font-semibold text-white shadow-sm shadow-sky-400/40 transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+                    >
+                      Cancelar cita
+                    </Button>
+                  </AlertDialogTrigger>
+
+                  <AlertDialogContent className="max-w-md rounded-2xl p-6">
+                    
+                    <div className="flex flex-col items-center text-center space-y-4">
+                      
+                      <div className="flex items-center justify-center w-14 h-14 rounded-full bg-red-100">
+                        <AlertTriangle className="w-7 h-7 text-red-600" />
+                      </div>
+
+                      <AlertDialogTitle className="text-xl font-semibold text-slate-900">
+                        ¿Cancelar cita?
+                      </AlertDialogTitle>
+
+                      <AlertDialogDescription className="text-sm text-slate-500">
+                        {citaElegida && (
+                          <>
+                            Vas a cancelar la cita de{" "}
+                            <b>{citaElegida.name}</b> el{" "}
+                            <b>{formatFecha(citaElegida.date)}</b>.
+                            <br />
+                            <span className="text-red-500 font-medium">
+                              Esta acción no se puede deshacer.
+                            </span>
+                          </>
+                        )}
+                      </AlertDialogDescription>
+
+                    </div>
+
+                    <AlertDialogFooter className="mt-6 flex gap-2 justify-center">
+                      <AlertDialogCancel className="rounded-xl px-4">
+                        Volver
+                      </AlertDialogCancel>
+
+                      <AlertDialogAction
+                        onClick={handleCancelar}
+                        disabled={cancelando}
+                        className="bg-red-600 hover:bg-red-700 rounded-xl px-4"
+                      >
+                        {cancelando ? "Cancelando..." : "Sí, cancelar"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+
+                  </AlertDialogContent>
+                </AlertDialog>
+
                 <Button
                   onClick={handleContinuar}
                   disabled={!citaElegida}
-                  className="bg-sky-600 hover:bg-sky-700 text-white rounded-xl"
+                  className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-6 py-4 text-sm font-semibold text-white shadow-sm shadow-sky-400/40 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300"
                 >
                   Elegir nuevo horario
                 </Button>
+
               </div>
             </div>
           )}
@@ -201,5 +296,46 @@ export function BuscarCitaStep() {
         </CardContent>
       </Card>
     </main>
+     <Dialog open={modalExito} onOpenChange={setModalExito}>
+      <DialogContent className="max-w-md rounded-2xl p-6">
+
+        <div className="flex flex-col items-center text-center space-y-4">
+          
+          <div className="flex items-center justify-center w-14 h-14 rounded-full bg-green-100">
+            <CheckCircle className="w-7 h-7 text-green-600" />
+          </div>
+
+          <DialogTitle className="text-xl font-semibold text-slate-900">
+            Cita cancelada
+          </DialogTitle>
+
+          <p className="text-sm text-slate-500">
+            Tu cita fue cancelada correctamente.
+          </p>
+        </div>
+
+      </DialogContent>
+    </Dialog>
+
+    <Dialog open={modal.open} onOpenChange={(open) => setModal(prev => ({ ...prev, open }))}>
+      <DialogContent className="max-w-md rounded-2xl p-6">
+
+        <div className="flex flex-col items-center text-center space-y-4">
+          
+          <div className="flex items-center justify-center w-14 h-14 rounded-full bg-yellow-100">
+            <AlertTriangle className="w-7 h-7 text-yellow-600" />
+          </div>
+
+          <DialogTitle className="text-xl font-semibold text-slate-900">
+            {modal.title}
+          </DialogTitle>
+
+          <p className="text-sm text-slate-500">
+            {modal.description}
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
