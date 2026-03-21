@@ -1,11 +1,11 @@
 "use client";
 
 import { Stepper } from "../../components/ui/stepper";
-import { SeleccionCiudadStep } from "../../components/scheduling/SeleccionCiudadStep";
+import { SeleccionCiudadStep } from "../../components/scheduling/SelectCityStep";
 import { SeleccionSedeStep } from "../../components/scheduling/SelectServiceStep";
-import { SeleccionHorarioStep } from "../../components/scheduling/SeleccionHorarioStep";
+import { SeleccionHorarioStep } from "../../components/scheduling/SelectScheduleStep";
 import { DatosClienteStep } from "../../components/scheduling/DatosClienteStep";
-import { ConfirmacionStep } from "../../components/scheduling/ConfirmacionStep";
+import { ConfirmacionStep } from "../../components/scheduling/ConfirmationStep";
 import { useAppointmentStore } from "../../store/appointmentStore";
 import { ProtectedRoute } from "../../components/auth/ProtectedRoute";
 

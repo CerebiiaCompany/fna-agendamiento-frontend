@@ -332,7 +332,7 @@ export function NuevoHorarioStep() {
                 {scheduleSelected && horaSeleccionada && (
                   <div className="mx-6 mb-4">
                     <ReCAPTCHA
-                      sitekey="6Lcl0IwsAAAAAHfu_1ybQdC3V_Ge7uysDvMe6Zd8"
+                      sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
                       onChange={(token: string | null) => setCaptchaToken(token)}
                     />
                   </div>

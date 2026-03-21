@@ -2,9 +2,9 @@
 
  
 import { Stepper } from "../../components/ui/stepper";
-import { BuscarCitaStep } from "../../components/reschedule/BuscarCitaStep";
-import { NuevoHorarioStep } from "../../components/reschedule/NuevoHorarioStep";
-import { ConfirmacionRescheduleStep } from "../../components/reschedule/ConfirmacionRescheduleStep";
+import { BuscarCitaStep } from "../../components/reschedule/SearchAppointmentStep";
+import { NuevoHorarioStep } from "../../components/reschedule/NewScheduleStep";
+import { ConfirmacionRescheduleStep } from "../../components/reschedule/ConfirmationRescheduleStep";
 import { useRescheduleStore } from "../../store/rescheduleStore";
 import { ProtectedRoute } from "../../components/auth/ProtectedRoute";
  

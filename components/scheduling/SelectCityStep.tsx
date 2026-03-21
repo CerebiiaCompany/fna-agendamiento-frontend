@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAppointmentStore } from "../../store/appointmentStore";
 import { obtenerCiudades, getApiErrorMessage, type Ciudad } from "../../lib/api";
+import { Button } from "../ui/button";
 
 type EstadoCarga = "idle" | "loading" | "success" | "error";
 
@@ -88,14 +89,14 @@ export function SeleccionCiudadStep() {
       )}
 
       <div className="mt-2 flex justify-end sm:col-span-2">
-        <button
+        <Button
           type="button"
           disabled={!puedeContinuar}
           className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-400/40 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300"
           onClick={handleContinuar}
         >
           Continuar al tipo de trámite
-        </button>
+        </Button>
       </div>
     </div>
   );

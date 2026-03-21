@@ -11,7 +11,7 @@ import {
   TRAMITES_PREDETERMINADOS,
   getTramitesAgrupados,
   type TramiteOption,
-} from "../../lib/tramites";
+} from "../../lib/sevices";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
