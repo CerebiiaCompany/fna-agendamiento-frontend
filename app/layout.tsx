@@ -17,6 +17,10 @@ export const metadata: Metadata = {
   title: "FNA - Agendamiento de Citas",
   description:
     "Sistema de agendamiento de citas del Fondo Nacional del Ahorro.",
+  icons: {
+    icon: "/happy-icon.jpeg",
+    apple: "/happy-icon.jpeg",
+  },
 };
 
 export default function RootLayout({
