@@ -34,7 +34,8 @@ export type RegisterPayload = {
   document_number: string;
   password: string;
   role: UserRole;
-  email?: string | null;
+  first_name: string,
+  last_name: string;
 };
 
 export type RegisterResponse = {

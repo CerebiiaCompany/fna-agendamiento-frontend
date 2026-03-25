@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { CircleUser, LogOut, Mail } from "lucide-react";
+import { CircleUser, LogOut, Mail, X } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { usePathname } from "next/navigation";
 import type { AuthUser } from "../../lib/auth-api";
@@ -126,7 +126,7 @@ const ALL_NAV_LINKS: NavLink[] = [
   { href: "/scheduling", label: "Agendar citas" },
   { href: "/reschedule", label: "Reagendar citas" },
   { href: "/register", label: "Registrar usuarios", adminOnly: true },
-  { href: "/auditorias", label: "Auditorías" },
+  { href: "/audit", label: "Auditorías" },
 ];
 
 export function AppHeader() {
@@ -211,15 +211,26 @@ export function AppHeader() {
           </div>
         </div>
 
-        {mobileOpen && (
-          <div
-            className={`navbar:hidden fixed inset-0 z-100 flex flex-col bg-white ${
-              mobileOpen
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 -translate-y-4 pointer-events-none"
-            }`}
-          >
-            <div className="h-full flex flex-col px-6 py-8">
+        <div
+          className={`navbar:hidden fixed inset-0 w-full h-screen z-[100] flex flex-col bg-white transition-all duration-300 ${
+            mobileOpen
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 -translate-y-6 pointer-events-none"
+          }`}
+        >
+           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <h2 className="text-base font-semibold text-gray-900">
+              FNA - Agendamiento
+            </h2>
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition"
+            >
+              <X className="w-5 h-5 text-gray-700" />
+            </button>
+
+          </div>
+            <div className="flex flex-col flex-1 px-6 py-8">
 
               <div className="flex-1 flex flex-col gap-2">
                 {navLinks.map((link, i) => (
@@ -227,12 +238,15 @@ export function AppHeader() {
                     key={`${link.href}-${link.label}`}
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`px-5 py-4 rounded-2xl text-lg font-medium transition-all duration-300 ${
+                    className={`px-5 py-4 rounded-2xl text-lg font-medium ${
                       pathname === link.href
                         ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
                         : "text-gray-700 hover:bg-gray-100"
                     }`}
                     style={{
+                      transitionProperty: "all",
+                      transitionDuration: "300ms",
+                      transitionTimingFunction: "ease-out",
                       transitionDelay: mobileOpen ? `${i * 50}ms` : "0ms",
                       opacity: mobileOpen ? 1 : 0,
                       transform: mobileOpen
@@ -244,9 +258,28 @@ export function AppHeader() {
                   </Link>
                 ))}
               </div>
+              <div
+                className="transition-all duration-300 ease-out"
+                style={{
+                  transitionDelay: mobileOpen ? "200ms" : "0ms",
+                  opacity: mobileOpen ? 1 : 0,
+                  transform: mobileOpen ? "translateY(0)" : "translateY(20px)",
+                }}
+              >
+
+                <button
+                  onClick={() => {
+                    logout();
+                    setMobileOpen(false);
+                  }}
+                  className="w-full h-14 bg-linear-to-r from-blue-600 to-cyan-500 text-white rounded-2xl text-base font-medium shadow-lg shadow-blue-500/25"
+                >
+                  Cerrar sesión
+                </button>
+              </div>
+
             </div>
           </div>
-        )}
       </header>
   );
 }

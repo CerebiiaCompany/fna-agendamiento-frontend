@@ -4,16 +4,17 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UserPlus, FileText, Mail, Lock, Eye, EyeOff, Shield, CheckCircle } from "lucide-react";
+import { UserPlus, FileText, Lock, Eye, EyeOff, Shield, CheckCircle } from "lucide-react";
 import { register as registerApi, getAuthErrorMessage, type UserRole } from "../../lib/auth-api";
 
 const schema = z
   .object({
     document_number: z.string().min(5, "Mínimo 5 caracteres"),
+    first_name: z.string().min(2, "Nombres requeridos"),
+    last_name: z.string().min(2, "Apellidos requeridos"),
     password: z.string().min(8, "Mínimo 8 caracteres"),
     password_confirm: z.string(),
     role: z.enum(["ADMIN", "ADVISOR"], { message: "Selecciona un rol" }),
-    email: z.string().email("Correo válido").optional().or(z.literal("")),
   })
   .refine((data) => data.password === data.password_confirm, {
     message: "Las contraseñas no coinciden",
@@ -45,7 +46,7 @@ export function RegisterForm() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { role: "ADVISOR", email: "" },
+    defaultValues: { role: "ADVISOR" },
   });
 
   useEffect(() => {
@@ -61,10 +62,11 @@ export function RegisterForm() {
         document_number: values.document_number,
         password: values.password,
         role: values.role,
-        email: values.email?.trim() || undefined,
+        first_name: values.first_name,
+        last_name: values.last_name,
       });
       setShowToast(true);
-      reset({ role: "ADVISOR", email: "" });
+      reset({ role: "ADVISOR" });
     } catch (err) {
       setSubmitError(getAuthErrorMessage(err));
     }
@@ -72,12 +74,9 @@ export function RegisterForm() {
 
   return (
     <div className="w-full max-w-lg mx-auto">
-
-      {/* Form Card */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-lg shadow-slate-200/50 overflow-hidden">
         <div className="px-8 py-6 border-b border-slate-200 bg-slate-50/80">
           <div className="flex items-center gap-4">
-            
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-sky-200 to-sky-50">
               <UserPlus className="h-8 w-8 text-sky-600" />
             </div>
@@ -89,12 +88,11 @@ export function RegisterForm() {
                 Ingresa la información para crear un nuevo usuario.
               </p>
             </div>
-
           </div>
         </div>
-        
+
+
         <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-6">
-          {/* Número de documento */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">
               Número de documento
@@ -103,53 +101,55 @@ export function RegisterForm() {
               <FileText className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
               <input
                 type="text"
-                autoComplete="username"
                 placeholder="Ej. 1023456789"
                 className={`pl-12 h-12 ${inputBase}`}
                 {...register("document_number")}
               />
             </div>
             {errors.document_number && (
-              <p className="text-sm text-red-600 flex items-center gap-1.5">
-                <span className="w-1 h-1 rounded-full bg-red-600" />
-                {errors.document_number.message}
-              </p>
+              <p className="text-sm text-red-600">{errors.document_number.message}</p>
             )}
           </div>
 
-          {/* Correo electrónico */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">
-              Correo electrónico <span className="text-slate-500 font-normal">(opcional)</span>
+              Nombres
             </label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
-              <input
-                type="email"
-                autoComplete="email"
-                placeholder="usuario@ejemplo.com"
-                className={`pl-12 h-12 ${inputBase}`}
-                {...register("email")}
-              />
-            </div>
-            {errors.email && (
-              <p className="text-sm text-red-600 flex items-center gap-1.5">
-                <span className="w-1 h-1 rounded-full bg-red-600" />
-                {errors.email.message}
-              </p>
+            <input
+              type="text"
+              placeholder="Ej. Ana Sofía"
+              className={`h-12 px-4 ${inputBase}`}
+              {...register("first_name")}
+            />
+            {errors.first_name && (
+              <p className="text-sm text-red-600">{errors.first_name.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">
+              Apellidos
+            </label>
+            <input
+              type="text"
+              placeholder="Ej. Pérez Gómez"
+              className={`h-12 px-4 ${inputBase}`}
+              {...register("last_name")}
+            />
+            {errors.last_name && (
+              <p className="text-sm text-red-600">{errors.last_name.message}</p>
             )}
           </div>
 
           {/* Contraseña */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">
-              Contraseña <span className="text-slate-500 font-normal">(mín. 8 caracteres)</span>
+              Contraseña
             </label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
               <input
                 type={showPassword ? "text" : "password"}
-                autoComplete="new-password"
                 placeholder="Ingresa tu contraseña"
                 className={`pl-12 pr-12 h-12 ${inputBase}`}
                 {...register("password")}
@@ -157,25 +157,16 @@ export function RegisterForm() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 transition-colors p-1"
-                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"
               >
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
+                {showPassword ? <EyeOff /> : <Eye />}
               </button>
             </div>
             {errors.password && (
-              <p className="text-sm text-red-600 flex items-center gap-1.5">
-                <span className="w-1 h-1 rounded-full bg-red-600" />
-                {errors.password.message}
-              </p>
+              <p className="text-sm text-red-600">{errors.password.message}</p>
             )}
           </div>
 
-          {/* Confirmar contraseña */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">
               Confirmar contraseña
@@ -184,7 +175,6 @@ export function RegisterForm() {
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
               <input
                 type={showConfirmPassword ? "text" : "password"}
-                autoComplete="new-password"
                 placeholder="Confirma tu contraseña"
                 className={`pl-12 pr-12 h-12 ${inputBase}`}
                 {...register("password_confirm")}
@@ -192,33 +182,24 @@ export function RegisterForm() {
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 transition-colors p-1"
-                aria-label={showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"
               >
-                {showConfirmPassword ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
+                {showConfirmPassword ? <EyeOff /> : <Eye />}
               </button>
             </div>
             {errors.password_confirm && (
-              <p className="text-sm text-red-600 flex items-center gap-1.5">
-                <span className="w-1 h-1 rounded-full bg-red-600" />
-                {errors.password_confirm.message}
-              </p>
+              <p className="text-sm text-red-600">{errors.password_confirm.message}</p>
             )}
           </div>
 
-          {/* Rol */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">
               Rol
             </label>
             <div className="relative">
-              <Shield className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 z-10 pointer-events-none" />
+              <Shield className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
               <select
-                className={`pl-12 h-12 pr-4 ${inputBase} appearance-none`}
+                className={`pl-12 h-12 ${inputBase}`}
                 {...register("role")}
               >
                 {roles.map((r) => (
@@ -228,52 +209,26 @@ export function RegisterForm() {
                 ))}
               </select>
             </div>
-            {errors.role && (
-              <p className="text-sm text-red-600 flex items-center gap-1.5">
-                <span className="w-1 h-1 rounded-full bg-red-600" />
-                {errors.role.message}
-              </p>
-            )}
           </div>
 
           {submitError && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {submitError}
-            </div>
+            <div className="text-red-600 text-sm">{submitError}</div>
           )}
 
-          {/* Botón de registro */}
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full h-12 bg-sky-600 text-white hover:bg-sky-700 font-semibold text-base transition-all rounded-xl shadow-lg shadow-sky-500/25 hover:shadow-xl hover:shadow-sky-500/30 hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-70 disabled:translate-y-0"
-            >
-              {isSubmitting ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Registrando...
-                </div>
-              ) : (
-                "Registrarme"
-              )}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full h-12 bg-sky-600 text-white rounded-xl"
+          >
+            {isSubmitting ? "Registrando..." : "Registrarme"}
+          </button>
         </form>
       </div>
 
-      {/* Toast de confirmación */}
       {showToast && (
-        <div
-          role="alert"
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl border border-emerald-200 bg-white px-4 py-3 shadow-lg shadow-slate-300/30"
-        >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100">
-            <CheckCircle className="h-5 w-5 text-emerald-600" />
-          </div>
-          <p className="text-sm font-medium text-slate-800">
-            Usuario registrado correctamente.
-          </p>
+        <div className="fixed bottom-6 right-6 flex items-center gap-3 bg-white border p-3 rounded-xl shadow-lg">
+          <CheckCircle className="text-green-600" />
+          <p>Usuario registrado correctamente</p>
         </div>
       )}
     </div>

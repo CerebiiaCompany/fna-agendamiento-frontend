@@ -225,19 +225,19 @@ export function BuscarCitaStep() {
                 );
               })}
 
-              <div className="pt-2 flex justify-end gap-2">
+              <div className="pt-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
                       disabled={!citaElegida}
-                      className="inline-flex items-center justify-center rounded-xl bg-red-600 px-6 py-4 text-sm font-semibold text-white shadow-sm shadow-sky-400/40 transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+                      variant="outline"
+                      className="w-full sm:w-auto h-11 px-5 rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Cancelar cita
                     </Button>
                   </AlertDialogTrigger>
 
                   <AlertDialogContent className="max-w-md rounded-2xl p-6">
-                    
                     <div className="flex flex-col items-center text-center space-y-4">
                       
                       <div className="flex items-center justify-center w-14 h-14 rounded-full bg-red-100">
@@ -261,7 +261,6 @@ export function BuscarCitaStep() {
                           </>
                         )}
                       </AlertDialogDescription>
-
                     </div>
 
                     <AlertDialogFooter className="mt-6 flex gap-2 justify-center">
@@ -277,18 +276,16 @@ export function BuscarCitaStep() {
                         {cancelando ? "Cancelando..." : "Sí, cancelar"}
                       </AlertDialogAction>
                     </AlertDialogFooter>
-
                   </AlertDialogContent>
                 </AlertDialog>
 
                 <Button
                   onClick={handleContinuar}
                   disabled={!citaElegida}
-                  className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-6 py-4 text-sm font-semibold text-white shadow-sm shadow-sky-400/40 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300"
+                  className="w-full sm:w-auto h-11 px-5 rounded-xl bg-sky-600 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300"
                 >
                   Elegir nuevo horario
                 </Button>
-
               </div>
             </div>
           )}
