@@ -8,6 +8,14 @@ const api = axios.create({
     Accept: "application/json",
   },
 });
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("fna_access_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
  
 // =============================
 // TYPES
@@ -132,6 +140,30 @@ export type CitaActiva = {
   typeNotify: string | null;
 };
 
+export type AuditRecord = {
+  id: string;
+  asesor: string;
+  usuario: string;
+  identificacion: string;
+  servicio: string;
+  sede: string;
+  fechaCita: string;
+  fechaAccion: string;
+  accion: "Reagendar" | "Crear" | "Eliminar"
+}
+
+type RawAuditRecord = {
+  id: number;
+  action: "CREATE" | "UPDATE" | "DELETE";
+  advisor_name: string;
+  client_name: string;
+  client_document: string;
+  service_name: string;
+  branch_name: string;
+  appointment_date: string;
+  action_date: string;
+};
+
 export type ReagendarPayload = CrearCitaPayload;
  
 export type ReagendarResult = {
@@ -227,7 +259,36 @@ export async function cancelarCita(
 ): Promise<void> {
   await api.delete(`/cancel/${appointmentId}/`, { signal });
 }
- 
+
+function mapAction(action: RawAuditRecord["action"]): AuditRecord["accion"] {
+  switch (action) {
+    case "CREATE":
+      return "Crear";
+    case "UPDATE":
+      return "Reagendar";
+    case "DELETE":
+      return "Eliminar";
+    default:
+      return "Crear";
+  }
+}
+
+export async function obtenerAuditorias(signal?: AbortSignal): Promise<AuditRecord[]> {
+  const res = await api.get<{ results: RawAuditRecord[] }>("/audit?page_size=all", { signal });
+
+  return res.data.results.map((item): AuditRecord => ({
+    id: String(item.id),
+    asesor: item.advisor_name,
+    usuario: item.client_name,
+    identificacion: item.client_document,
+    servicio: item.service_name,
+    sede: item.branch_name,
+    fechaCita: item.appointment_date,
+    fechaAccion: item.action_date,
+    accion: mapAction(item.action),
+  }));
+}
+
 // =============================
 // ERROR HELPER
 // =============================

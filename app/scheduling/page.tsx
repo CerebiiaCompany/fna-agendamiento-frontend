@@ -22,7 +22,7 @@ export default function Home() {
 
   return (
     <ProtectedRoute>
-    <div className="flex min-h-screen items-center justify-center bg-linear-to-r from-sky-50 via-slate-50 to-emerald-50 px-4 py-10 font-sans">
+    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center bg-linear-to-r from-sky-50 via-slate-50 to-emerald-50 px-4 py-10 font-sans">
       <main className="w-full max-w-5xl rounded-3xl bg-white/90 p-6 shadow-xl shadow-sky-100 ring-1 ring-sky-100 backdrop-blur-md sm:p-10">
         <header className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>

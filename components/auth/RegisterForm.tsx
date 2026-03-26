@@ -33,7 +33,7 @@ const inputBase =
 
 const TOAST_DURATION_MS = 5000;
 
-export function RegisterForm() {
+export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -67,6 +67,7 @@ export function RegisterForm() {
       });
       setShowToast(true);
       reset({ role: "ADVISOR" });
+      onSuccess?.()
     } catch (err) {
       setSubmitError(getAuthErrorMessage(err));
     }

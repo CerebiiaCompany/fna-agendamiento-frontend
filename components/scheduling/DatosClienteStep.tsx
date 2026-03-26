@@ -168,7 +168,7 @@ export function DatosClienteStep() {
         </div>
       </div>
 
-      <div className="mt-2 flex w-full items-center justify-between sm:col-span-2">
+      <div className="pt-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
         <button
           type="button"
           className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"

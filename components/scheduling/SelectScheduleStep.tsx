@@ -287,7 +287,6 @@ export function SeleccionHorarioStep() {
                 </div>
               )}
 
-              {/* Slot seleccionado */}
               {scheduleSelected && horaSeleccionada && (
                 <div className="mx-6 mb-4 rounded-md bg-green-50 border border-green-200 px-4 py-2.5 text-sm text-green-800">
                   Seleccionado:{" "}
@@ -312,7 +311,7 @@ export function SeleccionHorarioStep() {
                 </div>
               )}
 
-              <div className="flex flex-col gap-3 px-6 pb-6 sm:flex-row sm:justify-between">
+              <div className="flex flex-col gap-3 pt-8 sm:flex-row sm:justify-between">
                 <Button
                   variant="outline"
                   className="order-2 sm:order-1"

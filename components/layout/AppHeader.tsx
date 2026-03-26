@@ -125,8 +125,8 @@ const ALL_NAV_LINKS: NavLink[] = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/scheduling", label: "Agendar citas" },
   { href: "/reschedule", label: "Reagendar citas" },
-  { href: "/register", label: "Registrar usuarios", adminOnly: true },
-  { href: "/audit", label: "Auditorías" },
+  { href: "/register", label: "Gestionar usuarios", adminOnly: true },
+  { href: "/audit", label: "Auditorías", adminOnly: true },
 ];
 
 export function AppHeader() {

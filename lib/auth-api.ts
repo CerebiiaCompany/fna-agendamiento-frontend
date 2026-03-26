@@ -1,12 +1,20 @@
 import axios, { AxiosError } from "axios";
 
-const baseURL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
-
 const authApi = axios.create({
-  baseURL,
-  timeout: 15000,
-  headers: { "Content-Type": "application/json", Accept: "application/json" },
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  timeout: 20000,
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
+
+authApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem("fna_access_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 export type UserRole = "ADMIN" | "ADVISOR";
@@ -42,6 +50,16 @@ export type RegisterResponse = {
   user: AuthUser;
 };
 
+export type User = {
+  id: number;
+  document_number: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  email: string | null;
+};
+
+
 export async function login(
   payload: LoginPayload,
   signal?: AbortSignal
@@ -73,4 +91,13 @@ export function getAuthErrorMessage(error: unknown): string {
     return typeof msg === "string" ? msg : "Error de conexión.";
   }
   return "Error inesperado.";
+}
+
+export async function getUsers(signal?: AbortSignal): Promise<User[]> {
+  const { data } = await authApi.get<User[]>("/auth/users/", { signal });
+  return data;
+}
+ 
+export async function deleteUser(userId: number): Promise<void> {
+  await authApi.delete(`/auth/users/${userId}/`);
 }

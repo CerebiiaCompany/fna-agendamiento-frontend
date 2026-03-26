@@ -237,7 +237,7 @@ export function BuscarCitaStep() {
                     </Button>
                   </AlertDialogTrigger>
 
-                  <AlertDialogContent className="max-w-md rounded-2xl p-6">
+                  <AlertDialogContent className="w-full max-w-md rounded-2xl p-6 overflow-y-auto max-h-screen">
                     <div className="flex flex-col items-center text-center space-y-4">
                       
                       <div className="flex items-center justify-center w-14 h-14 rounded-full bg-red-100">
@@ -293,11 +293,9 @@ export function BuscarCitaStep() {
         </CardContent>
       </Card>
     </main>
-     <Dialog open={modalExito} onOpenChange={setModalExito}>
-      <DialogContent className="max-w-md rounded-2xl p-6">
-
+    <Dialog open={modalExito} onOpenChange={setModalExito}>
+      <DialogContent className="w-full max-w-md mx-4 sm:mx-auto rounded-2xl p-6 max-h-screen overflow-y-auto">
         <div className="flex flex-col items-center text-center space-y-4">
-          
           <div className="flex items-center justify-center w-14 h-14 rounded-full bg-green-100">
             <CheckCircle className="w-7 h-7 text-green-600" />
           </div>
@@ -310,7 +308,6 @@ export function BuscarCitaStep() {
             Tu cita fue cancelada correctamente.
           </p>
         </div>
-
       </DialogContent>
     </Dialog>
 
