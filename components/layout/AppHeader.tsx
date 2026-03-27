@@ -122,7 +122,7 @@ type NavLink = {
 };
 
 const ALL_NAV_LINKS: NavLink[] = [
-  { href: "/dashboard", label: "Dashboard" },
+  { href: "/dashboard", label: "Dashboard", adminOnly: true },
   { href: "/scheduling", label: "Agendar citas" },
   { href: "/reschedule", label: "Reagendar citas" },
   { href: "/register", label: "Gestionar usuarios", adminOnly: true },
@@ -145,7 +145,7 @@ export function AppHeader() {
   return (
       <header className="sticky top-0 z-50 w-full bg-linear-to-b from-blue-50 to-transparent py-6 backdrop-blur">
         <div className="max-w-screen-2xl mx-auto px-4">
-          <div className="grid grid-cols-3 items-center w-full">
+          <div className="grid grid-cols-[auto_1fr_auto] items-center w-full">
 
             <Link href="/" className="flex items-center gap-2 z-10">
               <div className="w-10 h-10 rounded-full overflow-hidden shadow-lg shadow-blue-500/20">
@@ -157,7 +157,10 @@ export function AppHeader() {
                   className="object-cover"
                 />
               </div>
-         
+
+              <span className="text-sm sm:text-base font-semibold text-slate-800">
+                FNA - AGENDAMIENTO
+              </span>
             </Link>
 
             {isHydrated && user && (

@@ -17,7 +17,7 @@ const steps = [
   "Confirmación",
 ];
 
-export default function Home() {
+export default function SchedulingPage() {
   const pasoActual = useAppointmentStore((s) => s.pasoActual);
 
   return (

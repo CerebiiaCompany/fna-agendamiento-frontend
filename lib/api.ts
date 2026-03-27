@@ -154,7 +154,7 @@ export type AuditRecord = {
 
 type RawAuditRecord = {
   id: number;
-  action: "CREATE" | "UPDATE" | "DELETE";
+  action: "CREATE" | "RESCHEDULE" | "CANCEL";
   advisor_name: string;
   client_name: string;
   client_document: string;
@@ -245,7 +245,7 @@ export async function reagendarCita(
   payload: ReagendarPayload,
   signal?: AbortSignal
 ): Promise<ReagendarResult> {
-  const { data } = await api.patch<ReagendarResult>(
+  const { data } = await api.post<ReagendarResult>(
     `/reschedule/${appointmentId}/`,
     payload,
     { signal }
@@ -264,9 +264,9 @@ function mapAction(action: RawAuditRecord["action"]): AuditRecord["accion"] {
   switch (action) {
     case "CREATE":
       return "Crear";
-    case "UPDATE":
+    case "RESCHEDULE":
       return "Reagendar";
-    case "DELETE":
+    case "CANCEL":
       return "Eliminar";
     default:
       return "Crear";

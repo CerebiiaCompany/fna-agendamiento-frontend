@@ -134,11 +134,9 @@ export function SeleccionHorarioStep() {
 
   return (
     <main className="bg-background p-4 md:p-8">
-      <Card className="mx-auto max-w-4xl shadow-md border border-slate-200 bg-white">
-        <CardContent className="p-0 overflow-hidden rounded-xl">
-
-          {/* Header */}
-          <div className="px-6 pt-6 pb-4">
+      <Card className="mx-auto max-w-4xl shadow-lg">
+        <CardContent className="p-6 md:p-8">
+          <div className="space-y-2 mb-6">
             <h2 className="text-xl font-semibold text-foreground">
               Selecciona la fecha y horario
             </h2>
@@ -146,8 +144,6 @@ export function SeleccionHorarioStep() {
               Elige el día y uno de los horarios disponibles.
             </p>
           </div>
-
-          {/* Loading */}
           {estado === "loading" && (
             <div className="px-6 pb-6">
               <p className="text-sm text-muted-foreground">
@@ -155,8 +151,6 @@ export function SeleccionHorarioStep() {
               </p>
             </div>
           )}
-
-          {/* Error */}
           {estado === "error" && (
             <div className="px-6 pb-6">
               <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -164,8 +158,6 @@ export function SeleccionHorarioStep() {
               </div>
             </div>
           )}
-
-          {/* Éxito */}
           {estado === "success" && oficinasDisponibles.length > 0 && (
             <>
               {oficinasDisponibles.map((oficina) => {
@@ -173,8 +165,7 @@ export function SeleccionHorarioStep() {
 
                 return (
                   <div key={oficina.officeId}>
-                    {/* Barra de sede */}
-                    <div className="flex items-center gap-3 bg-slate-800 text-white px-5 py-3 mx-6 rounded-lg mb-0">
+                    <div className="flex items-center gap-3 bg-slate-800 text-white px-5 py-3 rounded-lg mb-0">
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/15 shrink-0">
                         <MapPin className="w-4 h-4" />
                       </div>
@@ -185,8 +176,7 @@ export function SeleccionHorarioStep() {
                       </div>
                     </div>
 
-                    {/* Tabla de horarios */}
-                    <div className="mx-6 mt-3 mb-4 rounded-lg border border-slate-200 overflow-hidden">
+                    <div className="mt-3 mb-4 rounded-lg border border-slate-200 overflow-hidden">
                       <table className="w-full border-collapse">
                         <thead>
                           <tr className="bg-slate-50 border-b border-slate-200">
@@ -314,23 +304,23 @@ export function SeleccionHorarioStep() {
               <div className="flex flex-col gap-3 pt-8 sm:flex-row sm:justify-between">
                 <Button
                   variant="outline"
-                  className="order-2 sm:order-1"
+                  className="w-full sm:w-auto order-2 sm:order-1"
                   onClick={() => setPasoActual(2)}
                 >
                   Volver
                 </Button>
+
                 <Button
-                  className="order-1 sm:order-2 inline-flex items-center justify-center rounded-xl bg-sky-600 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-400/40 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300"
+                  className="w-full sm:w-auto order-1 sm:order-2 inline-flex items-center justify-center rounded-xl bg-sky-600 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-400/40 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300"
                   disabled={!puedeContinuar}
                   onClick={handleContinuar}
                 >
-                  Continuar a datos del usuario
+                  Continuar
                 </Button>
               </div>
             </>
           )}
 
-          {/* Sin datos */}
           {estado === "success" && oficinasDisponibles.length === 0 && (
             <div className="px-6 pb-6">
               <p className="text-sm text-muted-foreground">

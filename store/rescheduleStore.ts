@@ -1,4 +1,3 @@
-// store/rescheduleStore.ts
 import { create } from "zustand";
 import type { CitaActiva, CityStructure } from "../lib/api";
 import type { SlotHorario } from "./appointmentStore";
@@ -14,7 +13,7 @@ type RescheduleState = {
   nuevaOficinaDescripcion?: string;
   estructura: CityStructure[];
   resultado?: { appointmentId: number; status: string };
-  // Actions
+ 
   setPaso: (paso: number) => void;
   setCitaActiva: (cita: CitaActiva) => void;
   setAccion: (accion: Accion) => void;

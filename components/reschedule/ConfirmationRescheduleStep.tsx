@@ -6,6 +6,7 @@ import { reagendarCita, getApiErrorMessage } from "../../lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, MapPin, CheckCircle2, AlertCircle } from "lucide-react";
+import ReCAPTCHA from "react-google-recaptcha";
 
 function formatFecha(date: string | null | undefined) {
   if (!date) return "—";
@@ -26,27 +27,37 @@ export function ConfirmacionRescheduleStep() {
 
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const handleConfirmar = async () => {
     if (!citaActiva || !nuevoSlot || !nuevaOficinaId) return;
+
+    if (!captchaToken) {
+      setError("Debes completar el captcha antes de confirmar.");
+      return;
+    }
 
     setEnviando(true);
     setError(null);
 
     try {
+      const horaNormalizada = nuevoSlot.hour.length > 5
+        ? nuevoSlot.hour.slice(0, 5)
+        : nuevoSlot.hour;
+
       const payload = {
-        acepto: "true",
+        acepto: "on",
         branchOfficeId: String(nuevaOficinaId),
         browserVersion: navigator.userAgent.slice(0, 200),
         ciudad: String(citaActiva.cityName ?? ""),
         country: "Colombia",
-        datePetition: `${nuevoSlot.date}T${nuevoSlot.hour}`,
+        datePetition: `${nuevoSlot.date}T${horaNormalizada}`,
         departmentId: String(citaActiva.subdepartmentId ?? ""),
         document: citaActiva.document ?? "",
         documentType: citaActiva.documentType ?? "",
         email: citaActiva.email ?? "",
         gender: citaActiva.gender ?? "",
-        hour: nuevoSlot.hour,
+        hour: horaNormalizada,
         ip: citaActiva.ip ?? "0.0.0.0",
         name: citaActiva.name ?? "",
         phone: citaActiva.phone ?? "",
@@ -54,7 +65,8 @@ export function ConfirmacionRescheduleStep() {
         sede: String(nuevaOficinaId),
         subdepartmentId: String(citaActiva.departmentId ?? ""),
         typeNotify: "email",
-    };
+        "g-recaptcha-response": captchaToken,
+      };
 
       const result = await reagendarCita(citaActiva.id, payload);
       setResultado(result);
@@ -67,7 +79,7 @@ export function ConfirmacionRescheduleStep() {
 
   if (resultado) {
     return (
-      <main className="min-h-screen bg-background p-4 md:p-8">
+      <main className="bg-background p-4 md:p-8">
         <Card className="mx-auto max-w-lg shadow-md border border-slate-200 bg-white">
           <CardContent className="p-8 flex flex-col items-center text-center gap-4">
             <div className="flex items-center justify-center w-14 h-14 rounded-full bg-green-100">
@@ -94,9 +106,6 @@ export function ConfirmacionRescheduleStep() {
                   <span><span className="font-medium">Sede:</span> {nuevaOficinaDescripcion}</span>
                 </div>
               )}
-              <p className="text-xs text-slate-400 pt-1">
-                ID de cita: #{resultado.appointmentId} — Estado: {resultado.status}
-              </p>
             </div>
           </CardContent>
         </Card>
@@ -105,7 +114,7 @@ export function ConfirmacionRescheduleStep() {
   }
 
   return (
-    <main className="min-h-screen bg-background p-4 md:p-8">
+    <main className="bg-background p-4 md:p-8">
       <Card className="mx-auto max-w-lg shadow-md border border-slate-200 bg-white">
         <CardContent className="p-6 sm:p-8 space-y-6">
 
@@ -156,6 +165,11 @@ export function ConfirmacionRescheduleStep() {
             </div>
           </div>
 
+          <ReCAPTCHA
+            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+            onChange={(token: string | null) => setCaptchaToken(token)}
+          />
+
           {error && (
             <div className="flex gap-2 items-start rounded-md border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
               <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
@@ -173,9 +187,9 @@ export function ConfirmacionRescheduleStep() {
               Volver
             </Button>
             <Button
-              className="bg-sky-600 hover:bg-sky-700 text-white rounded-xl"
+              className="bg-sky-600 hover:bg-sky-700 text-white rounded-xl disabled:bg-sky-300 disabled:cursor-not-allowed"
               onClick={handleConfirmar}
-              disabled={enviando}
+              disabled={!captchaToken || enviando}
             >
               {enviando ? "Reagendando..." : "Confirmar reagendado"}
             </Button>

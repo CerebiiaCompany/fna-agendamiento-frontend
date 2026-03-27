@@ -3,7 +3,7 @@
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { UsersTable } from "@/components/users/UsersTable"
 
-export default function AuditPage() {
+export default function UsersPage() {
     return (
         <ProtectedRoute role="ADMIN">
         <div className="min-h-[calc(100vh-80px)] bg-linear-to-r from-sky-50 via-slate-50 to-emerald-50 px-4 py-10 font-sans">
