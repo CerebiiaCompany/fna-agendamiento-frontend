@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UserPlus, FileText, Lock, Eye, EyeOff, Shield, CheckCircle } from "lucide-react";
+import { UserPlus, FileText, Lock, Eye, EyeOff, Shield, CheckCircle, Mail } from "lucide-react";
 import { register as registerApi, getAuthErrorMessage, type UserRole } from "../../lib/auth-api";
 
 const schema = z
@@ -12,6 +12,7 @@ const schema = z
     document_number: z.string().min(5, "Mínimo 5 caracteres"),
     first_name: z.string().min(2, "Nombres requeridos"),
     last_name: z.string().min(2, "Apellidos requeridos"),
+    email: z.string().email("Correo electrónico inválido"),
     password: z.string().min(8, "Mínimo 8 caracteres"),
     password_confirm: z.string(),
     role: z.enum(["ADMIN", "ADVISOR"], { message: "Selecciona un rol" }),
@@ -64,10 +65,11 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
         role: values.role,
         first_name: values.first_name,
         last_name: values.last_name,
+        email: values.email,
       });
       setShowToast(true);
       reset({ role: "ADVISOR" });
-      onSuccess?.()
+      onSuccess?.();
     } catch (err) {
       setSubmitError(getAuthErrorMessage(err));
     }
@@ -91,7 +93,6 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             </div>
           </div>
         </div>
-
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-6">
           <div className="space-y-2">
@@ -142,7 +143,24 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             )}
           </div>
 
-          {/* Contraseña */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">
+              Correo electrónico
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+              <input
+                type="email"
+                placeholder="Ej. usuario@correo.com"
+                className={`pl-12 h-12 ${inputBase}`}
+                {...register("email")}
+              />
+            </div>
+            {errors.email && (
+              <p className="text-sm text-red-600">{errors.email.message}</p>
+            )}
+          </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">
               Contraseña

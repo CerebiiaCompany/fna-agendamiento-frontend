@@ -5,10 +5,19 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { useState } from "react"
 import { useAdvisorsTable } from "@/hooks/useAdvisorsTable"
 
+const PAGE_SIZE = 5
+
 export function AdvisorsTable() {
-  const { data, loading } = useAdvisorsTable(7)
+  const { data, loading } = useAdvisorsTable()
+  const [page, setPage] = useState(1)
+
+  const totalPages = Math.ceil(data.length / PAGE_SIZE)
+  const paginated = data.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <Card className="border-border/50 bg-card col-span-full">
@@ -18,7 +27,7 @@ export function AdvisorsTable() {
       <CardContent>
         {loading ? (
           <div className="space-y-3">
-            {Array.from({ length: 4 }).map((_, i) => (
+            {Array.from({ length: PAGE_SIZE }).map((_, i) => (
               <Skeleton key={i} className="h-14 w-full rounded-lg" />
             ))}
           </div>
@@ -38,7 +47,7 @@ export function AdvisorsTable() {
               <div className="col-span-2 text-center">Efectividad</div>
             </div>
 
-            {data.map((advisor) => {
+            {paginated.map((advisor) => {
               const efectividad = advisor.citas > 0
                 ? Math.round(((advisor.creadas + advisor.reagendadas) / advisor.citas) * 100)
                 : 0
@@ -57,7 +66,6 @@ export function AdvisorsTable() {
                       </Avatar>
                       <div>
                         <p className="font-medium text-sm">{advisor.nombre}</p>
-                        <p className="text-xs text-muted-foreground">{advisor.sede}</p>
                       </div>
                     </div>
                     <div className="col-span-1 text-center font-medium">{advisor.citas}</div>
@@ -120,6 +128,46 @@ export function AdvisorsTable() {
                 </div>
               )
             })}
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                <span className="text-xs text-muted-foreground">
+                  {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, data.length)} de {data.length} asesores
+                </span>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  {Array.from({ length: totalPages }).map((_, i) => (
+                    <Button
+                      key={i}
+                      variant={page === i + 1 ? "default" : "ghost"}
+                      size="icon"
+                      className="h-8 w-8 text-xs"
+                      onClick={() => setPage(i + 1)}
+                    >
+                      {i + 1}
+                    </Button>
+                  ))}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
           </div>
         )}
       </CardContent>

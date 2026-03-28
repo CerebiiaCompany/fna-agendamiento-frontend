@@ -44,6 +44,7 @@ export type RegisterPayload = {
   role: UserRole;
   first_name: string,
   last_name: string;
+  email: string
 };
 
 export type RegisterResponse = {

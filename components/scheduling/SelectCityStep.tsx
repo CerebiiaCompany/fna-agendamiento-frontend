@@ -29,7 +29,7 @@ export function SeleccionCiudadStep() {
       .catch((err) => {
         if (abort.signal.aborted) return;
         setEstado("error");
-        setErrorMensaje(getApiErrorMessage(err));
+        setErrorMensaje("Solicitud fuera del horario de atención.")
       });
     return () => abort.abort();
   }, []);
@@ -92,7 +92,7 @@ export function SeleccionCiudadStep() {
         <Button
           type="button"
           disabled={!puedeContinuar}
-          className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-400/40 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300"
+          className="w-full sm:w-auto h-11 px-5 rounded-xl bg-sky-600 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300"
           onClick={handleContinuar}
         >
           Continuar al tipo de trámite

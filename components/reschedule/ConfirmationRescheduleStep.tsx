@@ -20,6 +20,8 @@ export function ConfirmacionRescheduleStep() {
     nuevoSlot,
     nuevaOficinaId,
     nuevaOficinaDescripcion,
+    nuevoDepartmentId,
+    nuevoSubdepartmentId,
     setResultado,
     setPaso,
     resultado,
@@ -52,7 +54,7 @@ export function ConfirmacionRescheduleStep() {
         ciudad: String(citaActiva.cityName ?? ""),
         country: "Colombia",
         datePetition: `${nuevoSlot.date}T${horaNormalizada}`,
-        departmentId: String(citaActiva.subdepartmentId ?? ""),
+        departmentId: String(nuevoSubdepartmentId ?? ""),
         document: citaActiva.document ?? "",
         documentType: citaActiva.documentType ?? "",
         email: citaActiva.email ?? "",
@@ -63,7 +65,7 @@ export function ConfirmacionRescheduleStep() {
         phone: citaActiva.phone ?? "",
         presenceType: "Presencial",
         sede: String(nuevaOficinaId),
-        subdepartmentId: String(citaActiva.departmentId ?? ""),
+        subdepartmentId: String(nuevoDepartmentId ?? ""),
         typeNotify: "email",
         "g-recaptcha-response": captchaToken,
       };
@@ -107,6 +109,15 @@ export function ConfirmacionRescheduleStep() {
                 </div>
               )}
             </div>
+
+            <Button
+              variant="outline"
+               className="w-full sm:w-auto h-11 px-5 border-blue-500 text-blue-500"
+               onClick={() => setPaso(1)}
+               disabled={enviando}
+            >
+              Volver a reagendar cita
+            </Button>
           </CardContent>
         </Card>
       </main>
@@ -165,10 +176,12 @@ export function ConfirmacionRescheduleStep() {
             </div>
           </div>
 
+         <div className="block sm:hidden mt-4">
           <ReCAPTCHA
             sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
             onChange={(token: string | null) => setCaptchaToken(token)}
           />
+          </div>
 
           {error && (
             <div className="flex gap-2 items-start rounded-md border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
@@ -177,17 +190,17 @@ export function ConfirmacionRescheduleStep() {
             </div>
           )}
 
-          <div className="flex justify-between pt-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-between ">
             <Button
               variant="outline"
-              className="rounded-xl"
+              className="w-full sm:w-auto h-11 px-5"
               onClick={() => setPaso(2)}
               disabled={enviando}
             >
               Volver
             </Button>
             <Button
-              className="bg-sky-600 hover:bg-sky-700 text-white rounded-xl disabled:bg-sky-300 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto h-11 px-5 rounded-xl bg-sky-600 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300"
               onClick={handleConfirmar}
               disabled={!captchaToken || enviando}
             >

@@ -17,7 +17,8 @@ import { MapPin } from "lucide-react";
 type EstadoCarga = "idle" | "loading" | "success" | "error";
 
 export function NuevoHorarioStep() {
-  const { citaActiva, setEstructura, setPaso, setNuevoSlot } = useRescheduleStore();
+  const { citaActiva, setEstructura, setPaso, setNuevoSlot, estructura } =
+    useRescheduleStore();
 
   const [oficinasDisponibles, setOficinasDisponibles] = useState<OfficeAvailability[]>([]);
   const [estado, setEstado] = useState<EstadoCarga>("idle");
@@ -70,6 +71,8 @@ export function NuevoHorarioStep() {
     return () => abort.abort();
   }, [citaActiva]);
 
+  console.log("citaActiva:", JSON.stringify(citaActiva, null, 2))
+
   const handleSeleccionarHora = (
     schedule: ScheduleItem,
     hora: string,
@@ -90,13 +93,49 @@ export function NuevoHorarioStep() {
     const horaNormalizada =
       horaSeleccionada.length > 5 ? horaSeleccionada.slice(0, 5) : horaSeleccionada;
 
+    console.log("officeId seleccionado:", slotOficinaId);
+    console.log("estructura disponible:", estructura.map(s => ({ id: s.id, name: s.name })));
+    console.log("service buscado (departmentId):", citaActiva?.departmentId);
+    console.log("subservice buscado (subdepartmentId):", citaActiva?.subdepartmentId);
+
     const oficina = oficinasDisponibles.find((o) => o.officeId === slotOficinaId);
 
-    setNuevoSlot(
-      { date: scheduleSelected.date, hour: horaNormalizada },
-      slotOficinaId,
-      oficina?.descriptionOffice ?? ""
+    const sedeEstructura = estructura.find((s) => s.id === slotOficinaId);
+
+
+    const service = sedeEstructura?.services?.find(
+      (sv) => sv.name.trim() === citaActiva?.subdepartmentName?.trim()
     );
+
+    const subservice = service?.subservices?.find(
+      (sub) => sub.name.trim() === citaActiva?.departmentName?.trim()
+    );
+
+
+    console.log("sedeEstructura services:", JSON.stringify(sedeEstructura?.services, null, 2));
+
+    console.log("service encontrado:", JSON.stringify(service, null, 2));
+
+    console.log("subservice encontrado:", JSON.stringify(subservice, null, 2));
+
+    console.log("buscando service por nombre:", citaActiva?.subdepartmentName);
+
+    console.log("buscando subservice por nombre:", citaActiva?.departmentName);
+
+if (!service || !subservice) {
+  setErrorMensaje(
+    "Esta sede no ofrece el servicio de tu cita original. Por favor elige otra sede."
+  );
+  return;
+}
+
+setNuevoSlot(
+  { date: scheduleSelected.date, hour: horaNormalizada },
+  slotOficinaId,
+  oficina?.descriptionOffice ?? "",
+  subservice.id,
+  service.id
+);
 
     setPaso(3);
   };
@@ -157,8 +196,12 @@ export function NuevoHorarioStep() {
                       <table className="w-full border-collapse">
                         <thead>
                           <tr className="bg-slate-50 border-b border-slate-200">
-                            <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wide w-32">Fecha</th>
-                            <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wide">Horarios disponibles</th>
+                            <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wide w-32">
+                              Fecha
+                            </th>
+                            <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                              Horarios disponibles
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
@@ -169,7 +212,10 @@ export function NuevoHorarioStep() {
                             if (filtered.length === 0) {
                               return (
                                 <tr>
-                                  <td colSpan={2} className="px-4 py-6 text-center text-sm text-slate-400 italic">
+                                  <td
+                                    colSpan={2}
+                                    className="px-4 py-6 text-center text-sm text-slate-400 italic"
+                                  >
                                     Sin turnos disponibles para esta sede
                                   </td>
                                 </tr>
@@ -178,17 +224,29 @@ export function NuevoHorarioStep() {
                             return filtered.map((s) => {
                               const sorted = sortHours(s.scheduleHours);
                               return (
-                                <tr key={s.date} className="border-b border-slate-100 last:border-b-0">
+                                <tr
+                                  key={s.date}
+                                  className="border-b border-slate-100 last:border-b-0"
+                                >
                                   <td className="px-4 py-4 align-top">
-                                    <p className="text-sm font-medium text-slate-800">{capDay(s.weekDay)}</p>
-                                    <p className="text-xs text-slate-500 mt-0.5">{formatDate(s.date)}</p>
+                                    <p className="text-sm font-medium text-slate-800">
+                                      {capDay(s.weekDay)}
+                                    </p>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                      {formatDate(s.date)}
+                                    </p>
                                   </td>
                                   <td className="px-4 py-4">
                                     <div className="flex flex-wrap gap-2">
                                       {sorted.map((h) => {
                                         const [hh, mm] = h.hour.split(":").map(Number);
                                         const total = hh * 60 + mm + 20;
-                                        const nextHour = `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+                                        const nextHour = `${String(
+                                          Math.floor(total / 60)
+                                        ).padStart(2, "0")}:${String(total % 60).padStart(
+                                          2,
+                                          "0"
+                                        )}`;
                                         const isSelected =
                                           scheduleSelected?.date === s.date &&
                                           horaSeleccionada === h.hour &&
@@ -196,7 +254,9 @@ export function NuevoHorarioStep() {
                                         return (
                                           <button
                                             key={h.hour}
-                                            onClick={() => handleSeleccionarHora(s, h.hour, oficina)}
+                                            onClick={() =>
+                                              handleSeleccionarHora(s, h.hour, oficina)
+                                            }
                                             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
                                               isSelected
                                                 ? "bg-green-500 text-white border-green-500 shadow-sm"
@@ -228,9 +288,16 @@ export function NuevoHorarioStep() {
                   </span>{" "}
                   a las <span className="font-medium">{horaSeleccionada}</span>
                   {slotOficinaId && (
-                    <> — <span className="font-medium">
-                      {oficinasDisponibles.find((o) => o.officeId === slotOficinaId)?.descriptionOffice}
-                    </span></>
+                    <>
+                      {" "}
+                      —{" "}
+                      <span className="font-medium">
+                        {
+                          oficinasDisponibles.find((o) => o.officeId === slotOficinaId)
+                            ?.descriptionOffice
+                        }
+                      </span>
+                    </>
                   )}
                 </div>
               )}
@@ -240,21 +307,21 @@ export function NuevoHorarioStep() {
                   {errorMensaje}
                 </div>
               )}
-
-              <div className="flex justify-between px-6 pb-6">
+  
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-between mx-6 mb-6">
                 <Button
                   variant="outline"
-                  className="rounded-xl"
+                  className="w-full sm:w-auto h-11 px-5"
                   onClick={() => setPaso(1)}
                 >
                   Volver
                 </Button>
                 <Button
-                  className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-6 py-4 text-sm font-semibold text-white shadow-sm shadow-sky-400/40 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300"
+                  className="w-full sm:w-auto h-11 px-5 rounded-xl bg-sky-600 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300"
                   disabled={!scheduleSelected || !horaSeleccionada}
-                  onClick={handleConfirmar}
+                   onClick={handleConfirmar}
                 >
-                  Siguiente
+                  Continuar a confirmación
                 </Button>
               </div>
             </>
@@ -262,7 +329,9 @@ export function NuevoHorarioStep() {
 
           {estado === "success" && oficinasDisponibles.length === 0 && (
             <div className="px-6 pb-6">
-              <p className="text-sm text-slate-400">No hay disponibilidad por el momento.</p>
+              <p className="text-sm text-slate-400">
+                No hay disponibilidad por el momento.
+              </p>
             </div>
           )}
 

@@ -47,6 +47,7 @@ export function BuscarCitaStep() {
 
     try {
       const data = await obtenerCitasPorDocumento(doc);
+      console.log("Respuesta API:", data);
 
       if (data.length === 0) {
         setError("No se encontraron citas activas para este documento.");
@@ -58,7 +59,7 @@ export function BuscarCitaStep() {
       setEstado("success");
 
     } catch (e) {
-      const msg = getApiErrorMessage(e);
+      const msg ="Solicitud fuera del horario de atención."
 
       if (msg.includes("No tienes cita activa")) {
         setModal({
@@ -312,7 +313,7 @@ export function BuscarCitaStep() {
     </Dialog>
 
     <Dialog open={modal.open} onOpenChange={(open) => setModal(prev => ({ ...prev, open }))}>
-      <DialogContent className="max-w-md rounded-2xl p-6">
+      <DialogContent className="max-w-md rounded-2xl p-6 sm:p-10">
 
         <div className="flex flex-col items-center text-center space-y-4">
           
