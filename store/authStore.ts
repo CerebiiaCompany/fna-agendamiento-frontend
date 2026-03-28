@@ -1,7 +1,6 @@
-"use client";
-
 import { create } from "zustand";
 import type { AuthUser } from "../lib/auth-api";
+import { logout as apiLogout } from "../lib/auth-api";
 
 const STORAGE_KEYS = {
   access: "fna_access_token",
@@ -44,16 +43,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.setItem(STORAGE_KEYS.access, access);
       localStorage.setItem(STORAGE_KEYS.refresh, refresh);
       localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(user));
+      document.cookie = `fna_access_token=${access}; path=/; max-age=1800`;
     }
     set({ user, accessToken: access });
   },
 
   logout: () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem(STORAGE_KEYS.access);
-      localStorage.removeItem(STORAGE_KEYS.refresh);
-      localStorage.removeItem(STORAGE_KEYS.user);
-    }
+    apiLogout();
     set({ user: null, accessToken: null });
   },
 

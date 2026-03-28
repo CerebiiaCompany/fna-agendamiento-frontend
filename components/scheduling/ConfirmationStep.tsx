@@ -4,9 +4,9 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import ReCAPTCHA from "react-google-recaptcha";
+import { Calendar, MapPin, Clock, AlertCircle, User, FileText } from "lucide-react";
 import { useAppointmentStore } from "../../store/appointmentStore";
 import { crearCita, getApiErrorMessage, type CityStructure } from "../../lib/api";
-
 
 function buscarIdsPorSede(
   estructura: CityStructure[],
@@ -15,9 +15,7 @@ function buscarIdsPorSede(
 ): { departmentId: number; subdepartmentId: number } | null {
   const target = subserviceName.trim().toUpperCase().replace(/\.+$/, "").trim();
   const sede = estructura.find((s) => s.id === sedeId);
-
   if (!sede) return null;
-
   for (const service of sede.services) {
     for (const sub of service.subservices) {
       const normalizado = sub.name.trim().toUpperCase().replace(/\.+$/, "").trim();
@@ -28,7 +26,6 @@ function buscarIdsPorSede(
   }
   return null;
 }
-
 
 export function ConfirmacionStep() {
   const {
@@ -67,13 +64,11 @@ export function ConfirmacionStep() {
       ? slotSeleccionado.hour.slice(0, 5)
       : slotSeleccionado.hour;
 
-
   const handleConfirmar = async () => {
     if (!captchaToken) {
       setErrorMensaje("Debes completar el captcha antes de confirmar.");
       return;
     }
-
 
     const ids = buscarIdsPorSede(
       estructura,
@@ -131,8 +126,11 @@ export function ConfirmacionStep() {
   const cita = citaConfirmada;
 
   return (
+    // ── mismo grid de dos columnas del diseño original ──────────────────────
     <div className="grid gap-6 rounded-2xl border border-slate-100 bg-slate-50/60 p-6 sm:grid-cols-[1.1fr_1.2fr] sm:p-8">
-      <div>
+
+      {/* ── Columna izquierda ─────────────────────────────────────────────── */}
+      <div className="min-w-0">
         <h2 className="text-lg font-semibold text-slate-900">
           Revisa y confirma los datos de la cita
         </h2>
@@ -140,68 +138,103 @@ export function ConfirmacionStep() {
           Verifica que toda la información esté correcta antes de confirmar.
         </p>
 
-        <div className="mt-4 space-y-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 text-sm">
+        {/* Tarjeta de resumen */}
+        <div className="mt-4 space-y-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 text-sm overflow-hidden">
+
+          {/* Datos del cliente */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
               Datos del cliente
             </p>
-            <p className="mt-1 text-slate-900">{datosCliente.name}</p>
-            <p className="text-xs text-slate-500">
-              {datosCliente.documentType} • {datosCliente.document}
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              {datosCliente.email} • {datosCliente.phone}
-            </p>
+            <div className="mt-1.5 space-y-1.5">
+              <div className="flex gap-2 items-center min-w-0">
+                <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span className="text-slate-900 truncate">{datosCliente.name}</span>
+              </div>
+              <div className="flex gap-2 items-center min-w-0">
+                <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span className="text-xs text-slate-500 truncate">
+                  {datosCliente.documentType} • {datosCliente.document}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 pl-5 break-all">
+                {datosCliente.email} • {datosCliente.phone}
+              </p>
+            </div>
           </div>
 
           <hr className="border-dashed border-slate-100" />
 
+          {/* Sede y trámite */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
               Sede y trámite
             </p>
-            <p className="mt-1 text-slate-900">{sedeSeleccionada.name}</p>
-            <p className="text-xs text-slate-500">{sedeSeleccionada.direction}</p>
-            <p className="mt-2 text-xs font-medium text-slate-700">
-              Trámite: {tipoTramiteSeleccionado.subdepartmentName}
-            </p>
+            <div className="mt-1.5 space-y-1.5">
+              <div className="flex gap-2 items-center min-w-0">
+                <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span className="text-slate-900 truncate">{sedeSeleccionada.name}</span>
+              </div>
+              <p className="text-xs text-slate-500 pl-5 break-words">{sedeSeleccionada.direction}</p>
+              <div className="pl-5">
+                <span className="text-xs font-medium text-slate-700 break-words">
+                  Trámite: {tipoTramiteSeleccionado.subdepartmentName}
+                </span>
+              </div>
+            </div>
           </div>
 
           <hr className="border-dashed border-slate-100" />
 
+          {/* Fecha y horario */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
               Fecha y horario
             </p>
-            <p className="mt-1 text-slate-900">{fechaFormateada}</p>
-            <p className="text-xs text-slate-500">{horaNormalizada}</p>
+            <div className="mt-1.5 space-y-1.5">
+              <div className="flex gap-2 items-start min-w-0">
+                <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                <span className="text-slate-900 break-words">{fechaFormateada}</span>
+              </div>
+              <div className="flex gap-2 items-center">
+                <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span className="text-xs text-slate-500">{horaNormalizada}</span>
+              </div>
+            </div>
           </div>
         </div>
 
+        {/* Error */}
         {errorMensaje && (
-          <div className="mt-3 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700">
-            {errorMensaje}
+          <div className="mt-3 flex gap-2 items-start rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700">
+            <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+            <span>{errorMensaje}</span>
           </div>
         )}
 
+        {/* Captcha */}
         {!cita && (
-          <div className="mt-4">
-            <ReCAPTCHA
-              sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
-              onChange={(token: string | null) => setCaptchaToken(token)}
-            />
+          <div className="mt-4 overflow-hidden">
+            <div className="scale-[0.95] origin-left sm:scale-100">
+              <ReCAPTCHA
+                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+                onChange={(token: string | null) => setCaptchaToken(token)}
+              />
+            </div>
           </div>
         )}
 
-        <div className="mt-5 flex items-center gap-3">
-          <button
-            type="button"
-            className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
-            onClick={() => setPasoActual(4)}
-            disabled={estado === "loading"}
-          >
-            Volver
-          </button>
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-between">
+          {!cita && (
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-5 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+              onClick={() => setPasoActual(4)}
+              disabled={estado === "loading"}
+            >
+              Volver
+            </button>
+          )}
 
           {!cita && (
             <button
@@ -216,7 +249,8 @@ export function ConfirmacionStep() {
         </div>
       </div>
 
-      <div className="flex flex-col justify-between">
+      {/* ── Columna derecha ───────────────────────────────────────────────── */}
+      <div className="flex flex-col justify-between min-w-0">
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50/80 px-4 py-4 text-sm text-emerald-900">
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
             Confirmación
@@ -225,9 +259,7 @@ export function ConfirmacionStep() {
           {cita ? (
             <>
               <p className="mt-1 text-base font-semibold">¡La cita ha sido agendada!</p>
-              <p className="mt-2 text-xs font-medium">
-                Recomendaciones al cliente:
-              </p>
+              <p className="mt-2 text-xs font-medium">Recomendaciones al cliente:</p>
               <ul className="mt-3 list-disc space-y-1 pl-5 text-xs">
                 <li>Llega 10 minutos antes de la hora programada.</li>
                 <li>Lleva tu documento de identidad y los soportes del trámite.</li>

@@ -1,5 +1,6 @@
 import axios, { AxiosError } from "axios";
- 
+import { logout } from "./auth-api";
+
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   timeout: 20000,
@@ -9,6 +10,10 @@ const api = axios.create({
   },
 });
 
+// =============================
+// INTERCEPTORS
+// =============================
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("fna_access_token");
   if (token) {
@@ -16,67 +21,129 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
- 
+
+// Cola de requests que fallaron mientras se renovaba el token
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (error: unknown) => void;
+}> = [];
+
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (token) resolve(token);
+    else reject(error);
+  });
+  failedQueue = [];
+};
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const original = error.config as typeof error.config & { _retry?: boolean };
+
+    if (error.response?.status !== 401 || original._retry) {
+      return Promise.reject(error);
+    }
+
+    // Si ya hay un refresh en curso, encola este request
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedQueue.push({ resolve, reject });
+      }).then((token) => {
+        original.headers!.Authorization = `Bearer ${token}`;
+        return api(original);
+      });
+    }
+
+    original._retry = true;
+    isRefreshing = true;
+
+    try {
+      const refresh = localStorage.getItem("fna_refresh_token");
+      if (!refresh) throw new Error("No refresh token");
+
+      const { data } = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/token/refresh/`,
+        { refresh },
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      localStorage.setItem("fna_access_token", data.access);
+      if (data.refresh) localStorage.setItem("fna_refresh_token", data.refresh);
+      document.cookie = `fna_access_token=${data.access}; path=/; max-age=1800`;
+
+      api.defaults.headers.common.Authorization = `Bearer ${data.access}`;
+      processQueue(null, data.access);
+
+      original.headers!.Authorization = `Bearer ${data.access}`;
+      return api(original);
+    } catch (refreshError) {
+      processQueue(refreshError, null);
+      logout();
+      return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
+    }
+  }
+);
+
 // =============================
 // TYPES
 // =============================
- 
+
 export type Ciudad = {
   id: number;
   departamentoId: string;
   nombre: string;
   listed: boolean;
 };
- 
+
 export type Subservice = {
   id: number;
   name: string;
 };
- 
+
 export type Service = {
   id: number;
   name: string;
   subservices: Subservice[];
 };
- 
+
 export type CityStructure = {
   id: number;
   name: string;
   direction: string;
   services: Service[];
 };
- 
 
 export type Sede = {
   id: number;
   name: string;
   direction: string;
 };
- 
 
 export type ScheduleHour = {
   hour: string;
 };
- 
+
 export type ScheduleItem = {
   date: string;
   weekDay: string;
   disabled: boolean;
   scheduleHours: ScheduleHour[];
 };
- 
+
 export type OfficeAvailability = {
   officeId: number;
   descriptionOffice: string;
   schedules: ScheduleItem[];
 };
- 
 
 export type CitaCreada = {
   appointmentId: number;
   status: string;
 };
- 
 
 export type SubserviceIdPayload = {
   cityId: number;
@@ -86,7 +153,7 @@ export type SubserviceIdPayload = {
   startDate: string;
   sedes: CityStructure[];
 };
- 
+
 export type SubserviceIdResponse = {
   cityId: number;
   departmentId: number;
@@ -149,8 +216,8 @@ export type AuditRecord = {
   sede: string;
   fechaCita: string;
   fechaAccion: string;
-  accion: "Reagendar" | "Crear" | "Eliminar"
-}
+  accion: "Reagendar" | "Crear" | "Eliminar";
+};
 
 type RawAuditRecord = {
   id: number;
@@ -165,48 +232,39 @@ type RawAuditRecord = {
 };
 
 export type ReagendarPayload = CrearCitaPayload;
- 
+
 export type ReagendarResult = {
   appointmentId: number;
   status: string;
 };
 
 export type Estado = "idle" | "loading" | "success" | "error";
- 
+
 // =============================
 // API CALLS
 // =============================
- 
-export async function obtenerCiudades(
-  signal?: AbortSignal
-): Promise<Ciudad[]> {
+
+export async function obtenerCiudades(signal?: AbortSignal): Promise<Ciudad[]> {
   const { data } = await api.get<Ciudad[]>("/cities/", { signal });
   return data;
 }
- 
+
 export async function obtenerEstructuraCiudad(
   cityId: number,
   signal?: AbortSignal
 ): Promise<CityStructure[]> {
-  const { data } = await api.get<CityStructure[]>(
-    `/city-structure/${cityId}/`,
-    { signal }
-  );
+  const { data } = await api.get<CityStructure[]>(`/city-structure/${cityId}/`, { signal });
   return data;
 }
- 
+
 export async function obtenerSubserviceId(
   payload: SubserviceIdPayload,
   signal?: AbortSignal
 ): Promise<SubserviceIdResponse> {
-  const { data } = await api.post<SubserviceIdResponse>(
-    "/subservice-id/",
-    payload,
-    { signal }
-  );
+  const { data } = await api.post<SubserviceIdResponse>("/subservice-id/", payload, { signal });
   return data;
 }
- 
+
 export async function obtenerDisponibilidadPorOficinas(
   params: {
     cityId: number;
@@ -219,27 +277,23 @@ export async function obtenerDisponibilidadPorOficinas(
   const { data } = await api.post("/availability/offices/", params, { signal });
   return data;
 }
- 
+
 export async function crearCita(
   payload: CrearCitaPayload,
   signal?: AbortSignal
 ): Promise<CitaCreada> {
-  const { data } = await api.post<CitaCreada>("/appointments/", payload, {
-    signal,
-  });
+  const { data } = await api.post<CitaCreada>("/appointments/", payload, { signal });
   return data;
 }
- 
+
 export async function obtenerCitasPorDocumento(
   document: string,
   signal?: AbortSignal
 ): Promise<CitaActiva[]> {
-  const { data } = await api.get<CitaActiva[]>(`/by-document/${document}/`, {
-    signal,
-  });
+  const { data } = await api.get<CitaActiva[]>(`/by-document/${document}/`, { signal });
   return data;
 }
- 
+
 export async function reagendarCita(
   appointmentId: number,
   payload: ReagendarPayload,
@@ -252,30 +306,38 @@ export async function reagendarCita(
   );
   return data;
 }
- 
+
 export async function cancelarCita(
   appointmentId: number,
+  cita: CitaActiva,
   signal?: AbortSignal
 ): Promise<void> {
-  await api.delete(`/cancel/${appointmentId}/`, { signal });
+  await api.delete(`/cancel/${appointmentId}/`, {
+    signal,
+    data: {
+      phone: cita.phone,
+      datePetition: cita.date,
+      hour: cita.hour,
+      name: cita.name,
+      document: cita.document,
+      email: cita.email,
+      subdepartmentId: cita.departmentName,
+      sede: cita.branchOfficeName,
+    },
+  });
 }
 
 function mapAction(action: RawAuditRecord["action"]): AuditRecord["accion"] {
   switch (action) {
-    case "CREATE":
-      return "Crear";
-    case "RESCHEDULE":
-      return "Reagendar";
-    case "CANCEL":
-      return "Eliminar";
-    default:
-      return "Crear";
+    case "CREATE":     return "Crear";
+    case "RESCHEDULE": return "Reagendar";
+    case "CANCEL":     return "Eliminar";
+    default:           return "Crear";
   }
 }
 
 export async function obtenerAuditorias(signal?: AbortSignal): Promise<AuditRecord[]> {
   const res = await api.get<{ results: RawAuditRecord[] }>("/audit?page_size=all", { signal });
-
   return res.data.results.map((item): AuditRecord => ({
     id: String(item.id),
     asesor: item.advisor_name,
@@ -292,7 +354,7 @@ export async function obtenerAuditorias(signal?: AbortSignal): Promise<AuditReco
 // =============================
 // ERROR HELPER
 // =============================
- 
+
 export function getApiErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const err = error as AxiosError<{ detail?: string; message?: string }>;
@@ -304,5 +366,5 @@ export function getApiErrorMessage(error: unknown): string {
   }
   return "Error inesperado.";
 }
- 
+
 export default api;

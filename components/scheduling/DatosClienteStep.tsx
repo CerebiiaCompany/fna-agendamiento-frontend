@@ -168,10 +168,10 @@ export function DatosClienteStep() {
         </div>
       </div>
 
-      <div className="sm:col-span-2 flex flex-col gap-3 pt-8 sm:flex-row sm:justify-between">
+      <div className="sm:col-span-2 flex flex-col gap-3 pt-8 sm:flex-row">
         <button
           type="button"
-          className="w-full sm:w-auto order-2 sm:order-1 inline-flex items-center justify-center rounded-xl border border-slate-200 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 h-11 px-5"
+          className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-slate-200 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 h-11 px-5"
           onClick={() => setPasoActual(3)}
         >
           Volver
@@ -180,7 +180,7 @@ export function DatosClienteStep() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full sm:w-auto h-11 px-5 rounded-xl bg-sky-600 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300"
+          className="w-full sm:w-auto h-11 px-5 rounded-xl bg-sky-600 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300 sm:ml-auto"
         >
           {isSubmitting ? "Validando..." : "Continuar a confirmación"}
         </button>

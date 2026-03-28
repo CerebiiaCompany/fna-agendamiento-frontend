@@ -193,17 +193,17 @@ export function SeleccionSedeStep() {
             </div>
           )}
 
-          <div className="flex flex-col gap-3 pt-8 sm:flex-row sm:justify-between">
+          <div className="flex flex-col gap-3 pt-8 sm:flex-row">
             <Button
               variant="outline"
-              className="w-full sm:w-auto order-2 sm:order-1 h-11 px-5"
+              className="w-full sm:w-auto h-11 px-5"
               onClick={() => setPasoActual(1)}
             >
               Volver
             </Button>
 
             <Button
-              className="w-full sm:w-auto h-11 px-5 rounded-xl bg-sky-600 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300"
+              className="w-full sm:w-auto h-11 px-5 rounded-xl bg-sky-600 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300 sm:ml-auto"
               disabled={!puedeContinuar}
               onClick={handleContinuar}
             >

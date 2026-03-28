@@ -176,12 +176,10 @@ export function ConfirmacionRescheduleStep() {
             </div>
           </div>
 
-         <div className="block sm:hidden mt-4">
           <ReCAPTCHA
             sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
             onChange={(token: string | null) => setCaptchaToken(token)}
           />
-          </div>
 
           {error && (
             <div className="flex gap-2 items-start rounded-md border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">

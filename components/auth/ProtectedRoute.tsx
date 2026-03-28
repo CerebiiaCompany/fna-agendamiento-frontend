@@ -1,36 +1,45 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "../../store/authStore";
 
+type AllowedRole = "ADMIN" | "ADVISOR" | "SUPERVISOR";
+
 type ProtectedRouteProps = {
   children: React.ReactNode;
-  role?: "ADMIN";
+  role?: AllowedRole | AllowedRole[];
 };
 
 export function ProtectedRoute({ children, role: requiredRole }: ProtectedRouteProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isHydrated, hydrate } = useAuthStore();
+  const hydrateRef = useRef(hydrate);
 
   useEffect(() => {
-    hydrate();
-  }, [hydrate]);
+    hydrateRef.current();
+  }, []);
 
   useEffect(() => {
     if (!isHydrated) return;
+
     if (!user) {
       const params = new URLSearchParams({ next: pathname ?? "/" });
       router.replace(`/login?${params.toString()}`);
       return;
     }
-    if (requiredRole === "ADMIN" && user.role !== "ADMIN") {
-      router.replace("/");
-    }
+
+    const hasRole = requiredRole
+      ? Array.isArray(requiredRole)
+        ? requiredRole.includes(user.role as AllowedRole)
+        : user.role === requiredRole
+      : true;
+
+    if (!hasRole) router.replace("/");
   }, [isHydrated, user, pathname, router, requiredRole]);
 
-  if (!isHydrated) {
+  if (!isHydrated || !user) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <p className="text-sm text-slate-500">Verificando sesión...</p>
@@ -38,13 +47,13 @@ export function ProtectedRoute({ children, role: requiredRole }: ProtectedRouteP
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  const hasRole = requiredRole
+    ? Array.isArray(requiredRole)
+      ? requiredRole.includes(user.role as AllowedRole)
+      : user.role === requiredRole
+    : true;
 
-  if (requiredRole === "ADMIN" && user.role !== "ADMIN") {
-    return null;
-  }
+  if (!hasRole) return null;
 
   return <>{children}</>;
 }

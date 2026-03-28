@@ -12,8 +12,6 @@ import { RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuditorias } from "@/hooks/useAuditorias"
 
-// Separado en componente interno para poder usar useAuditorias
-// dentro del provider (que también lo necesita para las sedes)
 function DashboardContent() {
   const { refetch } = useAuditorias()
   const [isRefreshing, setIsRefreshing] = useState(false)

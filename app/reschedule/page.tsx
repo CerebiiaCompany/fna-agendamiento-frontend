@@ -1,18 +1,23 @@
 "use client";
 
- 
+import { useEffect } from "react";
 import { Stepper } from "../../components/ui/stepper";
 import { BuscarCitaStep } from "../../components/reschedule/SearchAppointmentStep";
 import { NuevoHorarioStep } from "../../components/reschedule/NewScheduleStep";
 import { ConfirmacionRescheduleStep } from "../../components/reschedule/ConfirmationRescheduleStep";
 import { useRescheduleStore } from "../../store/rescheduleStore";
 import { ProtectedRoute } from "../../components/auth/ProtectedRoute";
- 
+
 const steps = ["Buscar cita", "Nuevo horario", "Confirmación"];
- 
+
 export default function ReschedulePage() {
   const paso = useRescheduleStore((s) => s.paso);
- 
+  const reset = useRescheduleStore((s) => s.reset);
+
+  useEffect(() => {
+    reset();
+  }, []);
+
   return (
     <ProtectedRoute>
       <div className="min-h-[calc(100vh-80px)] flex items-center justify-center bg-linear-to-r from-sky-50 via-slate-50 to-emerald-50 px-4 py-10 font-sans">
@@ -30,11 +35,9 @@ export default function ReschedulePage() {
               </p>
             </div>
           </header>
- 
           <section className="mb-8">
             <Stepper steps={steps} currentStep={paso} />
           </section>
- 
           <section className="relative">
             {paso === 1 && <BuscarCitaStep />}
             {paso === 2 && <NuevoHorarioStep />}

@@ -47,8 +47,8 @@ export function LoginForm() {
     try {
       const res = await login(values);
       setAuth(res.user, res.access, res.refresh);
+      await new Promise((r) => setTimeout(r, 50));
       router.push(nextUrl);
-      router.refresh();
     } catch (err) {
       setSubmitError(getAuthErrorMessage(err));
     }

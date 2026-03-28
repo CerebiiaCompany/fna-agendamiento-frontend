@@ -59,7 +59,7 @@ export function BuscarCitaStep() {
       setEstado("success");
 
     } catch (e) {
-      const msg ="Solicitud fuera del horario de atención."
+      const msg = getApiErrorMessage(e);
 
       if (msg.includes("No tienes cita activa")) {
         setModal({
@@ -91,7 +91,7 @@ export function BuscarCitaStep() {
     try {
       setCancelando(true);
 
-      await cancelarCita(citaElegida.id);
+      await cancelarCita(citaElegida.id, citaElegida);
 
       setCitas((prev) => prev.filter(c => c.id !== citaElegida.id));
       setCitaElegida(null);

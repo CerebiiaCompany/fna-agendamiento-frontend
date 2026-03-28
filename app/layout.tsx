@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ConditionalHeader } from "../components/layout/ConditionalHeader";
+import { PageWrapper } from "../components/layout/PageWrapper";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,8 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "FNA - Agendamiento de Citas",
-  description:
-    "Sistema de agendamiento de citas del Fondo Nacional del Ahorro.",
+  description: "Sistema de agendamiento de citas del Fondo Nacional del Ahorro.",
   icons: {
     icon: "/happy-icon.jpeg",
     apple: "/happy-icon.jpeg",
@@ -30,11 +30,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ConditionalHeader />
-        {children}
+        <PageWrapper>{children}</PageWrapper>
       </body>
     </html>
   );
