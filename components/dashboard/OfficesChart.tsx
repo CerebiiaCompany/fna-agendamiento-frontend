@@ -21,7 +21,7 @@ const chartConfig = {
 }
 
 export function OfficesChart() {
-  const { data, loading } = useLocationsChart(7)
+  const { data, loading } = useLocationsChart()
   const total = data.reduce((acc, item) => acc + item.cantidad, 0)
 
   return (
@@ -34,7 +34,7 @@ export function OfficesChart() {
           <Skeleton className="h-[300px] w-full rounded-lg" />
         ) : data.length === 0 ? (
           <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-            Sin datos en los últimos 7 días
+            Sin datos en el periodo seleccionado
           </div>
         ) : (
           <>

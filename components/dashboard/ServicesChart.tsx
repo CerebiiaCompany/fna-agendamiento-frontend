@@ -14,7 +14,7 @@ const chartConfig = {
 }
 
 export function ServicesChart() {
-  const { data, loading } = useServicesChart(7, 5)
+  const { data, loading } = useServicesChart(5)
 
   return (
     <Card className="border-border/50 bg-card">
@@ -26,7 +26,7 @@ export function ServicesChart() {
           <Skeleton className="h-[300px] w-full rounded-lg" />
         ) : data.length === 0 ? (
           <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-            Sin datos en los últimos 7 días
+            Sin datos en el periodo seleccionado
           </div>
         ) : (
           <ChartContainer config={chartConfig} className="h-[300px] w-full">
