@@ -5,7 +5,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 
 export default function AuditPage() {
     return (
-        <ProtectedRoute role="ADMIN">
+        <ProtectedRoute>
         <div className="min-h-[calc(100vh-80px)] bg-linear-to-r from-sky-50 via-slate-50 to-emerald-50 px-4 py-10 font-sans">
             <main className="container mx-auto px-4 py-10">
                 <div className="mb-6">

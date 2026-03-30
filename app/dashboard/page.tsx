@@ -78,7 +78,7 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <ProtectedRoute role="ADMIN">
+    <ProtectedRoute>
       <DashboardFiltersProvider>
         <DashboardContent />
       </DashboardFiltersProvider>
