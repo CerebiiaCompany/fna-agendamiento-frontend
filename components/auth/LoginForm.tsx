@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,7 +24,7 @@ const roles: { value: UserRole; label: string }[] = [
 ];
 
 const inputBase =
-  "w-full rounded-xl border bg-[oklch(0.97_0.01_240)] border-[oklch(0.9_0.02_240)] text-base focus:border-[oklch(0.55_0.2_240)] focus:ring-2 focus:ring-[oklch(0.55_0.2_240)]/20 transition-all placeholder:text-slate-500/60 outline-none";
+  "w-full rounded-xl border bg-[oklch(0.98_0.008_240)] border-[oklch(0.9_0.02_240)] text-base text-slate-700 focus:border-[oklch(0.55_0.2_240)] focus:ring-2 focus:ring-[oklch(0.55_0.2_240)]/20 transition-all placeholder:text-slate-500/60 outline-none";
 
 export function LoginForm() {
   const router = useRouter();
@@ -55,26 +56,33 @@ export function LoginForm() {
   };
 
   return (
-    <div className="border-0 rounded-2xl shadow-2xl shadow-[oklch(0.5_0.15_240)]/25 bg-white">
-      <div className="p-10 md:p-12">
+    <div className="w-full max-h-[calc(100dvh-2rem)] rounded-3xl border border-white/70 bg-white/95 shadow-2xl shadow-[oklch(0.5_0.15_240)]/20 backdrop-blur-sm sm:max-h-[calc(100dvh-3rem)]">
+      <div className="flex h-full flex-col p-4 sm:p-6 md:p-7">
         {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-r from-[oklch(0.55_0.2_240)] to-[oklch(0.4_0.22_230)] mb-5 shadow-xl shadow-[oklch(0.5_0.15_240)]/40">
-            <Lock className="w-8 h-8 text-white" />
+        <div className="mb-4 text-center sm:mb-5">
+          <div className="mb-3 inline-flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl shadow-lg shadow-[oklch(0.5_0.15_240)]/20 sm:h-16 sm:w-16">
+            <Image
+              src="/logoHappy.jpeg"
+              alt="Logo Happy"
+              width={64}
+              height={64}
+              className="h-full w-full object-cover"
+              priority
+            />
           </div>
 
-          <h1 className="text-2xl font-bold text-[oklch(0.25_0.06_240)]">
+          <h1 className="text-[1.7rem] font-bold text-[oklch(0.25_0.06_240)] sm:text-2xl">
             Iniciar sesión
           </h1>
 
-          <div className="flex items-center justify-center gap-1.5 mt-4">
+          <div className="mt-2.5 flex items-center justify-center gap-1.5">
             <span className="h-1 w-10 bg-linear-to-r from-[oklch(0.55_0.2_240)] to-[oklch(0.6_0.18_240)] rounded-full" />
             <span className="h-1 w-2 bg-[oklch(0.65_0.15_240)] rounded-full" />
           </div>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex-1 space-y-3 sm:space-y-4">
           <div className="space-y-4">
             {/* Documento / Cédula */}
             <div className="relative group">
@@ -85,7 +93,7 @@ export function LoginForm() {
                 type="text"
                 autoComplete="username"
                 placeholder="Número de cédula"
-                className={`pl-12 h-14 ${inputBase}`}
+                className={`h-11 pl-12 sm:h-12 ${inputBase}`}
                 {...register("document_number")}
               />
               {errors.document_number && (
@@ -104,7 +112,7 @@ export function LoginForm() {
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 placeholder="Contraseña"
-                className={`pl-12 pr-12 h-14 ${inputBase}`}
+                className={`h-11 pl-12 pr-12 sm:h-12 ${inputBase}`}
                 {...register("password")}
               />
               <button
@@ -132,7 +140,7 @@ export function LoginForm() {
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <select
-                className={`pl-12 h-14 pr-4 ${inputBase} appearance-none bg-[oklch(0.97_0.01_240)]`}
+                className={`h-11 pl-12 pr-4 sm:h-12 ${inputBase} appearance-none bg-[oklch(0.98_0.008_240)]`}
                 {...register("role")}
               >
                 {roles.map((r) => (
@@ -157,7 +165,7 @@ export function LoginForm() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-14 text-base font-bold uppercase tracking-widest rounded-xl bg-linear-to-r from-[oklch(0.55_0.2_240)] to-[oklch(0.5_0.22_230)] hover:from-[oklch(0.5_0.22_240)] hover:to-[oklch(0.45_0.24_230)] shadow-lg shadow-[oklch(0.5_0.15_240)]/35 hover:shadow-xl hover:shadow-[oklch(0.5_0.15_240)]/45 transition-all duration-300 hover:-translate-y-0.5 text-white disabled:pointer-events-none disabled:opacity-70 disabled:translate-y-0"
+            className="h-11 w-full rounded-xl bg-linear-to-r from-[oklch(0.55_0.2_240)] to-[oklch(0.5_0.22_230)] text-base font-bold uppercase tracking-widest text-white shadow-lg shadow-[oklch(0.5_0.15_240)]/35 transition-all duration-300 hover:-translate-y-0.5 hover:from-[oklch(0.5_0.22_240)] hover:to-[oklch(0.45_0.24_230)] hover:shadow-xl hover:shadow-[oklch(0.5_0.15_240)]/45 disabled:pointer-events-none disabled:translate-y-0 disabled:opacity-70 sm:h-12"
           >
             {isSubmitting ? (
               <div className="flex items-center justify-center gap-3">
@@ -170,7 +178,7 @@ export function LoginForm() {
           </button>
         </form>
 
-        <div className="mt-8 flex justify-center gap-1.5">
+        <div className="mt-4 flex justify-center gap-1.5 sm:mt-5">
           <span className="h-1.5 w-16 rounded-full bg-linear-to-r from-[oklch(0.55_0.2_240)] to-[oklch(0.6_0.18_240)]" />
           <span className="h-1.5 w-4 rounded-full bg-[oklch(0.7_0.12_240)]" />
           <span className="h-1.5 w-2 rounded-full bg-[oklch(0.8_0.08_240)]" />

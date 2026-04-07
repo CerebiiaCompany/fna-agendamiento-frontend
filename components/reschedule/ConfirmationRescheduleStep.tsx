@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRescheduleStore } from "../../store/rescheduleStore";
-import { reagendarCita, getApiErrorMessage } from "../../lib/api";
+import { reagendarCita, getApiErrorMessage, type ReagendarPayload } from "../../lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, MapPin, CheckCircle2, AlertCircle } from "lucide-react";
-import ReCAPTCHA from "react-google-recaptcha";
+import Captcha from "../Captcha";
+import { RECAPTCHA_ENABLED } from "../../lib/recaptcha";
 
 function formatFecha(date: string | null | undefined) {
   if (!date) return "—";
@@ -34,7 +35,7 @@ export function ConfirmacionRescheduleStep() {
   const handleConfirmar = async () => {
     if (!citaActiva || !nuevoSlot || !nuevaOficinaId) return;
 
-    if (!captchaToken) {
+    if (RECAPTCHA_ENABLED && !captchaToken) {
       setError("Debes completar el captcha antes de confirmar.");
       return;
     }
@@ -47,7 +48,7 @@ export function ConfirmacionRescheduleStep() {
         ? nuevoSlot.hour.slice(0, 5)
         : nuevoSlot.hour;
 
-      const payload = {
+      const payload: ReagendarPayload = {
         acepto: "on",
         branchOfficeId: String(nuevaOficinaId),
         browserVersion: navigator.userAgent.slice(0, 200),
@@ -67,8 +68,10 @@ export function ConfirmacionRescheduleStep() {
         sede: String(nuevaOficinaId),
         subdepartmentId: String(nuevoDepartmentId ?? ""),
         typeNotify: "email",
-        "g-recaptcha-response": captchaToken,
       };
+      if (RECAPTCHA_ENABLED && captchaToken) {
+        payload["g-recaptcha-response"] = captchaToken;
+      }
 
       const result = await reagendarCita(citaActiva.id, payload);
       setResultado(result);
@@ -176,10 +179,7 @@ export function ConfirmacionRescheduleStep() {
             </div>
           </div>
 
-          <ReCAPTCHA
-            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
-            onChange={(token: string | null) => setCaptchaToken(token)}
-          />
+          <Captcha onToken={setCaptchaToken} />
 
           {error && (
             <div className="flex gap-2 items-start rounded-md border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
@@ -200,7 +200,7 @@ export function ConfirmacionRescheduleStep() {
             <Button
               className="w-full sm:w-auto h-11 px-5 rounded-xl bg-sky-600 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-300"
               onClick={handleConfirmar}
-              disabled={!captchaToken || enviando}
+              disabled={(RECAPTCHA_ENABLED && !captchaToken) || enviando}
             >
               {enviando ? "Reagendando..." : "Confirmar reagendado"}
             </Button>

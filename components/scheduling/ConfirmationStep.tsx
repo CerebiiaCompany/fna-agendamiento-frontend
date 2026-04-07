@@ -3,10 +3,16 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import ReCAPTCHA from "react-google-recaptcha";
 import { Calendar, MapPin, Clock, AlertCircle, User, FileText } from "lucide-react";
 import { useAppointmentStore } from "../../store/appointmentStore";
-import { crearCita, getApiErrorMessage, type CityStructure } from "../../lib/api";
+import {
+  crearCita,
+  getApiErrorMessage,
+  type CityStructure,
+  type CrearCitaPayload,
+} from "../../lib/api";
+import Captcha from "../Captcha";
+import { RECAPTCHA_ENABLED } from "../../lib/recaptcha";
 
 function buscarIdsPorSede(
   estructura: CityStructure[],
@@ -65,7 +71,7 @@ export function ConfirmacionStep() {
       : slotSeleccionado.hour;
 
   const handleConfirmar = async () => {
-    if (!captchaToken) {
+    if (RECAPTCHA_ENABLED && !captchaToken) {
       setErrorMensaje("Debes completar el captcha antes de confirmar.");
       return;
     }
@@ -91,7 +97,7 @@ export function ConfirmacionStep() {
       typeof navigator !== "undefined" ? navigator.userAgent : "FNA-Frontend";
 
     try {
-      const payload = {
+      const payload: CrearCitaPayload = {
         acepto: "on",
         branchOfficeId: String(sedeSeleccionada.id),
         browserVersion,
@@ -111,8 +117,10 @@ export function ConfirmacionStep() {
         sede: String(sedeSeleccionada.id),
         subdepartmentId: String(ids.subdepartmentId),
         typeNotify: "email",
-        "g-recaptcha-response": captchaToken,
       };
+      if (RECAPTCHA_ENABLED && captchaToken) {
+        payload["g-recaptcha-response"] = captchaToken;
+      }
 
       const cita = await crearCita(payload);
       setCitaConfirmada(cita);
@@ -216,10 +224,7 @@ export function ConfirmacionStep() {
         {!cita && (
           <div className="mt-4 overflow-hidden">
             <div className="scale-[0.95] origin-left sm:scale-100">
-              <ReCAPTCHA
-                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
-                onChange={(token: string | null) => setCaptchaToken(token)}
-              />
+              <Captcha onToken={setCaptchaToken} />
             </div>
           </div>
         )}
