@@ -129,7 +129,7 @@ const ALL_NAV_LINKS: NavLink[] = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/scheduling", label: "Agendar citas" },
   { href: "/reschedule", label: "Reagendar citas" },
-  { href: "/register", label: "Gestionar usuarios", adminOnly: true },
+  { href: "/admin/users", label: "Gestionar usuarios", adminOnly: true },
   { href: "/audit", label: "Auditorías" },
 ];
 
@@ -225,10 +225,8 @@ export function AppHeader() {
       </div>
 
       <div
-        className={`navbar:hidden fixed inset-0 w-full h-screen z-100 flex flex-col bg-white transition-all duration-300 ${
-          mobileOpen
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 -translate-y-6 pointer-events-none"
+        className={`navbar:hidden fixed inset-0 z-100 h-screen w-full flex-col bg-white transition-all duration-300 ${
+          mobileOpen ? "flex opacity-100 translate-y-0" : "hidden"
         }`}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">

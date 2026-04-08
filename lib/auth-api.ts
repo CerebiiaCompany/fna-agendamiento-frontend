@@ -55,15 +55,6 @@ export type RegisterResponse = {
   user: AuthUser;
 };
 
-export type User = {
-  id: number;
-  document_number: string;
-  first_name: string;
-  last_name: string;
-  role: string;
-  email: string | null;
-};
-
 // =============================
 // AUTH CALLS
 // =============================
@@ -82,15 +73,6 @@ export async function register(
 ): Promise<RegisterResponse> {
   const { data } = await authApi.post<RegisterResponse>("/auth/register/", payload, { signal });
   return data;
-}
-
-export async function getUsers(signal?: AbortSignal): Promise<User[]> {
-  const { data } = await authApi.get<User[]>("/auth/users/", { signal });
-  return data;
-}
-
-export async function deleteUser(userId: number): Promise<void> {
-  await authApi.delete(`/auth/users/${userId}/`);
 }
 
 // =============================

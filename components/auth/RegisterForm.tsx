@@ -5,17 +5,23 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UserPlus, FileText, Lock, Eye, EyeOff, Shield, CheckCircle, Mail } from "lucide-react";
-import { register as registerApi, getAuthErrorMessage, type UserRole } from "../../lib/auth-api";
+import { type UserRole } from "../../lib/auth-api";
+import { createAdminUser, getApiErrorMessage } from "../../lib/api";
 
 const schema = z
   .object({
     document_number: z.string().min(5, "Mínimo 5 caracteres"),
     first_name: z.string().min(2, "Nombres requeridos"),
     last_name: z.string().min(2, "Apellidos requeridos"),
-    email: z.string().email("Correo electrónico inválido"),
+    email: z
+      .string()
+      .refine((v) => v === "" || z.string().email().safeParse(v).success, {
+        message: "Correo electrónico inválido",
+      }),
     password: z.string().min(8, "Mínimo 8 caracteres"),
     password_confirm: z.string(),
     role: z.enum(["ADMIN", "ADVISOR"], { message: "Selecciona un rol" }),
+    is_active: z.boolean(),
   })
   .refine((data) => data.password === data.password_confirm, {
     message: "Las contraseñas no coinciden",
@@ -34,7 +40,14 @@ const inputBase =
 
 const TOAST_DURATION_MS = 5000;
 
-export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
+export function RegisterForm({
+  onSuccess,
+  embeddedInDialog,
+}: {
+  onSuccess?: () => void;
+  /** Si true, no muestra el bloque de título (usar cuando el diálogo ya lleva DialogTitle). */
+  embeddedInDialog?: boolean;
+}) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -47,7 +60,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { role: "ADVISOR" },
+    defaultValues: { role: "ADVISOR", is_active: true, email: "" },
   });
 
   useEffect(() => {
@@ -59,40 +72,43 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
   const onSubmit = async (values: FormValues) => {
     setSubmitError(null);
     try {
-      await registerApi({
+      await createAdminUser({
         document_number: values.document_number,
         password: values.password,
         role: values.role,
         first_name: values.first_name,
         last_name: values.last_name,
-        email: values.email,
+        email: values.email.trim() || "",
+        is_active: values.is_active,
       });
       setShowToast(true);
-      reset({ role: "ADVISOR" });
+      reset({ role: "ADVISOR", is_active: true, email: "" });
       onSuccess?.();
     } catch (err) {
-      setSubmitError(getAuthErrorMessage(err));
+      setSubmitError(getApiErrorMessage(err));
     }
   };
 
   return (
     <div className="w-full max-w-lg mx-auto">
       <div className="bg-white rounded-2xl border border-slate-200 shadow-lg shadow-slate-200/50 overflow-hidden">
-        <div className="px-8 py-6 border-b border-slate-200 bg-slate-50/80">
-          <div className="flex items-center gap-4">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-sky-200 to-sky-50">
-              <UserPlus className="h-8 w-8 text-sky-600" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-slate-900">
-                Registro de usuario
-              </h2>
-              <p className="text-slate-500">
-                Ingresa la información para crear un nuevo usuario.
-              </p>
+        {!embeddedInDialog && (
+          <div className="px-8 py-6 border-b border-slate-200 bg-slate-50/80">
+            <div className="flex items-center gap-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-sky-200 to-sky-50">
+                <UserPlus className="h-8 w-8 text-sky-600" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">
+                  Nuevo usuario
+                </h2>
+                <p className="text-slate-500">
+                  Crea un usuario en el sistema (requiere sesión de administrador).
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-6">
           <div className="space-y-2">
@@ -151,7 +167,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
               <input
                 type="email"
-                placeholder="Ej. usuario@correo.com"
+                placeholder="Opcional — ej. usuario@correo.com"
                 className={`pl-12 h-12 ${inputBase}`}
                 {...register("email")}
               />
@@ -230,6 +246,18 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             </div>
           </div>
 
+          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+            <input
+              id="is_active"
+              type="checkbox"
+              className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+              {...register("is_active")}
+            />
+            <label htmlFor="is_active" className="text-sm font-medium text-slate-700">
+              Usuario activo (puede iniciar sesión)
+            </label>
+          </div>
+
           {submitError && (
             <div className="text-red-600 text-sm">{submitError}</div>
           )}
@@ -239,7 +267,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
             disabled={isSubmitting}
             className="w-full h-12 bg-sky-600 text-white rounded-xl"
           >
-            {isSubmitting ? "Registrando..." : "Registrarme"}
+            {isSubmitting ? "Creando..." : "Crear usuario"}
           </button>
         </form>
       </div>
@@ -247,7 +275,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
       {showToast && (
         <div className="fixed bottom-6 right-6 flex items-center gap-3 bg-white border p-3 rounded-xl shadow-lg">
           <CheckCircle className="text-green-600" />
-          <p>Usuario registrado correctamente</p>
+          <p>Usuario creado correctamente</p>
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
 import axios, { AxiosError } from "axios";
-import { logout } from "./auth-api";
+import { logout, type UserRole } from "./auth-api";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -365,6 +365,71 @@ export function getApiErrorMessage(error: unknown): string {
     return typeof msg === "string" ? msg : "Error de conexión con el servidor.";
   }
   return "Error inesperado.";
+}
+
+// =============================
+// ADMIN USERS (/auth/admin/users/)
+// =============================
+
+export type AdminUser = {
+  id: number;
+  document_number: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  email: string | null;
+  is_active: boolean;
+};
+
+export type AdminUserCreatePayload = {
+  document_number: string;
+  password: string;
+  role: UserRole;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  is_active?: boolean;
+};
+
+export type AdminUserPatchPayload = Partial<{
+  first_name: string;
+  last_name: string;
+  email: string;
+  document_number: string;
+  role: UserRole;
+  password: string;
+  is_active: boolean;
+}>;
+
+export async function listAdminUsers(signal?: AbortSignal): Promise<AdminUser[]> {
+  const { data } = await api.get<AdminUser[]>("/auth/admin/users/", { signal });
+  return data;
+}
+
+export async function createAdminUser(
+  payload: AdminUserCreatePayload,
+  signal?: AbortSignal
+): Promise<AdminUser> {
+  const { data } = await api.post<AdminUser>("/auth/admin/users/", payload, { signal });
+  return data;
+}
+
+export async function getAdminUser(userId: number, signal?: AbortSignal): Promise<AdminUser> {
+  const { data } = await api.get<AdminUser>(`/auth/admin/users/${userId}/`, { signal });
+  return data;
+}
+
+export async function patchAdminUser(
+  userId: number,
+  patch: AdminUserPatchPayload,
+  signal?: AbortSignal
+): Promise<AdminUser> {
+  const { data } = await api.patch<AdminUser>(`/auth/admin/users/${userId}/`, patch, { signal });
+  return data;
+}
+
+export async function deleteAdminUser(userId: number, signal?: AbortSignal): Promise<void> {
+  await api.delete(`/auth/admin/users/${userId}/`, { signal });
 }
 
 export default api;

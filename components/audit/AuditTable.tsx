@@ -21,11 +21,30 @@ const accionLabels = {
   Eliminar: "Eliminación",
 } as const
 
+/** Devuelve YYYY-MM-DD a partir de fechaCita o fechaAccion (ISO u otros formatos comunes). */
+function toDateKey(dateStr: string): string | null {
+  if (!dateStr || !dateStr.trim()) return null
+  const s = dateStr.trim()
+  if (s.includes("T")) return s.slice(0, 10)
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/)
+  if (m) return m[1]
+  const d = new Date(s)
+  if (Number.isNaN(d.getTime())) return null
+  const y = d.getFullYear()
+  const mo = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${y}-${mo}-${day}`
+}
+
 export function AppointmentsTable() {
   const [auditorias, setAuditorias] = useState<AuditRecord[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [filterSede, setFilterSede] = useState<string>("all")
   const [filterAccion, setFilterAccion] = useState<string>("all")
+  /** Fecha de acción (auditoría): desde / hasta inclusive, formato YYYY-MM-DD o "" */
+  const [fechaDesde, setFechaDesde] = useState("")
+  const [fechaHasta, setFechaHasta] = useState("")
+  const [fechaTipo, setFechaTipo] = useState<"accion" | "cita">("accion")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 8
 
@@ -41,7 +60,7 @@ export function AppointmentsTable() {
     fetchData()
   }, [])
 
-  const filteredData = auditorias.filter(record => {
+  const filteredData = auditorias.filter((record) => {
     const matchesSearch =
       record.asesor.toLowerCase().includes(searchTerm.toLowerCase()) ||
       record.usuario.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -52,7 +71,12 @@ export function AppointmentsTable() {
     const matchesSede = filterSede === "all" || record.sede.includes(filterSede)
     const matchesAccion = filterAccion === "all" || record.accion === filterAccion
 
-    return matchesSearch && matchesSede && matchesAccion
+    const fechaCampo = fechaTipo === "accion" ? record.fechaAccion : record.fechaCita
+    const ymd = toDateKey(fechaCampo)
+    const matchesFechaDesde = !fechaDesde || (ymd != null && ymd >= fechaDesde)
+    const matchesFechaHasta = !fechaHasta || (ymd != null && ymd <= fechaHasta)
+
+    return matchesSearch && matchesSede && matchesAccion && matchesFechaDesde && matchesFechaHasta
   })
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage)
@@ -107,23 +131,28 @@ export function AppointmentsTable() {
     return { date: datePart, time }
     }
 
+  const filterControlClass = "h-9 min-h-9 bg-card"
+
   return (
     <div className="flex flex-col gap-4 sm:gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1 sm:max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+        <div className="relative w-full flex-1 lg:max-w-sm">
+          <Search className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar por usuario, servicio o sede..."
             value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-            className="pl-10 bg-card"
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              setCurrentPage(1)
+            }}
+            className={`pl-10 ${filterControlClass}`}
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-2 sm:gap-x-3">
           <Select value={filterSede} onValueChange={(v) => { setFilterSede(v); setCurrentPage(1); }}>
-            <SelectTrigger className="w-[160px] sm:w-[180px] bg-card">
-              <MapPin className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+            <SelectTrigger className={`w-[160px] sm:w-[180px] ${filterControlClass}`}>
+              <MapPin className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
               <SelectValue placeholder="Filtrar por sede" />
             </SelectTrigger>
             <SelectContent>
@@ -137,8 +166,8 @@ export function AppointmentsTable() {
           </Select>
 
           <Select value={filterAccion} onValueChange={(v) => { setFilterAccion(v); setCurrentPage(1); }}>
-            <SelectTrigger className="w-[150px] sm:w-[160px] bg-card">
-              <Filter className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+            <SelectTrigger className={`w-[150px] sm:w-[160px] ${filterControlClass}`}>
+              <Filter className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
               <SelectValue placeholder="Tipo de acción" />
             </SelectTrigger>
             <SelectContent>
@@ -150,6 +179,65 @@ export function AppointmentsTable() {
               ))}
             </SelectContent>
           </Select>
+
+          <Select
+            value={fechaTipo}
+            onValueChange={(v) => {
+              setFechaTipo(v as "accion" | "cita")
+              setCurrentPage(1)
+            }}
+          >
+            <SelectTrigger className={`w-[150px] sm:w-[190px] ${filterControlClass}`}>
+              <Calendar className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="accion">Fecha de acción</SelectItem>
+              <SelectItem value="cita">Fecha de cita</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center gap-1.5">
+            <span className="shrink-0 text-xs font-medium text-muted-foreground">Desde</span>
+            <Input
+              type="date"
+              value={fechaDesde}
+              onChange={(e) => {
+                setFechaDesde(e.target.value)
+                setCurrentPage(1)
+              }}
+              className={`w-[138px] text-sm ${filterControlClass}`}
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="shrink-0 text-xs font-medium text-muted-foreground">Hasta</span>
+            <Input
+              type="date"
+              value={fechaHasta}
+              onChange={(e) => {
+                setFechaHasta(e.target.value)
+                setCurrentPage(1)
+              }}
+              className={`w-[138px] text-sm ${filterControlClass}`}
+            />
+          </div>
+
+          {(fechaDesde || fechaHasta) && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className={`${filterControlClass} shrink-0 px-2 text-muted-foreground`}
+              onClick={() => {
+                setFechaDesde("")
+                setFechaHasta("")
+                setCurrentPage(1)
+              }}
+            >
+              Limpiar fechas
+            </Button>
+          )}
         </div>
       </div>
 
@@ -370,7 +458,7 @@ export function AppointmentsTable() {
                     </span>
                 ) : (
                     <Button
-                    key={page}
+                    key={`page-${index}-${page}`}
                     size="sm"
                     variant={currentPage === page ? "default" : "outline"}
                     className={
