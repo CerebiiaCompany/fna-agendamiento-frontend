@@ -16,20 +16,48 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
+const MONTHS = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+] as const
+
 const PERIODOS: { value: Periodo; label: string }[] = [
   { value: "hoy",          label: "Hoy" },
   { value: "semana",       label: "Esta semana" },
   { value: "mes",          label: "Este mes" },
+  { value: "mes_anio",     label: "Mes y año" },
   { value: "trimestre",    label: "Este trimestre" },
   { value: "ano",          label: "Este año" },
   { value: "personalizado",label: "Personalizado" },
 ]
 
 export function DashboardFiltersBar() {
-  const { periodo, setPeriodo, setCustomRange, sede, setSede } = useDashboardFilters()
+  const {
+    periodo,
+    setPeriodo,
+    selectedMonth,
+    setSelectedMonth,
+    selectedYear,
+    setSelectedYear,
+    setCustomRange,
+    sede,
+    setSede,
+  } = useDashboardFilters()
   const { auditorias } = useAuditorias()
   const [calOpen, setCalOpen] = useState(false)
   const [tempRange, setTempRange] = useState<{ from?: Date; to?: Date }>({})
+  const currentYear = new Date().getFullYear()
+  const yearOptions = Array.from({ length: 6 }, (_, i) => currentYear - i)
 
   // Sedes únicas derivadas de las auditorías
   const sedes = Array.from(new Set(auditorias.map((a) => a.sede).filter(Boolean))) as string[]
@@ -85,6 +113,42 @@ export function DashboardFiltersBar() {
             />
           </PopoverContent>
         </Popover>
+      )}
+
+      {periodo === "mes_anio" && (
+        <>
+          <Select
+            value={String(selectedMonth)}
+            onValueChange={(v) => setSelectedMonth(Number(v))}
+          >
+            <SelectTrigger className="w-[140px] h-9 text-sm">
+              <SelectValue placeholder="Mes" />
+            </SelectTrigger>
+            <SelectContent>
+              {MONTHS.map((month, idx) => (
+                <SelectItem key={month} value={String(idx)}>
+                  {month}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={String(selectedYear)}
+            onValueChange={(v) => setSelectedYear(Number(v))}
+          >
+            <SelectTrigger className="w-[110px] h-9 text-sm">
+              <SelectValue placeholder="Año" />
+            </SelectTrigger>
+            <SelectContent>
+              {yearOptions.map((year) => (
+                <SelectItem key={year} value={String(year)}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </>
       )}
 
       {sedes.length > 0 && (
