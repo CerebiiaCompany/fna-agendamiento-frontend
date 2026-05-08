@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\USUARIO\\\\Desktop\\\\Cerebiia\\\\Fondo Nacional Agendamiento Citas\\\\fna-agendamiento-frontend\" -Directory)",
+      "Bash(Select-Object Name)"
+    ]
+  }
+}

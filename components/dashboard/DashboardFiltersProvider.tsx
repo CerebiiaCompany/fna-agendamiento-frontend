@@ -42,7 +42,7 @@ function resolveRange(
     }
     case "trimestre":     return { from: startOfQuarter(now), to: endOfQuarter(now) }
     case "ano":           return { from: startOfYear(now), to: endOfYear(now) }
-    case "personalizado": return custom
+    case "personalizado": return { from: startOfDay(custom.from), to: endOfDay(custom.to) }
   }
 }
 
