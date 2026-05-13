@@ -10,6 +10,7 @@ import {
   type OfficeAvailability,
   type ScheduleItem,
 } from "../../lib/api";
+import { getColombianHolidays } from "../../lib/holidays";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
@@ -26,6 +27,22 @@ export function NuevoHorarioStep() {
   const [scheduleSelected, setScheduleSelected] = useState<ScheduleItem | null>(null);
   const [horaSeleccionada, setHoraSeleccionada] = useState<string>("");
   const [slotOficinaId, setSlotOficinaId] = useState<number | null>(null);
+  const [festivos, setFestivos] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const abort = new AbortController();
+    const year = new Date().getFullYear();
+    Promise.all([
+      getColombianHolidays(year, abort.signal),
+      getColombianHolidays(year + 1, abort.signal),
+    ])
+      .then(([h1, h2]) => {
+        if (abort.signal.aborted) return;
+        setFestivos(new Set([...h1, ...h2]));
+      })
+      .catch(() => {});
+    return () => abort.abort();
+  }, []);
 
   useEffect(() => {
     if (!citaActiva?.departmentId || !citaActiva?.subdepartmentId) return;
@@ -207,7 +224,9 @@ setNuevoSlot(
                         <tbody>
                           {(() => {
                             const filtered = schedules.filter(
-                              (s) => s.weekDay !== "DOMINGO" && s.scheduleHours.length > 0
+                              (s) =>
+                                s.weekDay !== "DOMINGO" &&
+                                (s.scheduleHours.length > 0 || festivos.has(s.date))
                             );
                             if (filtered.length === 0) {
                               return (
@@ -222,6 +241,7 @@ setNuevoSlot(
                               );
                             }
                             return filtered.map((s) => {
+                              const esFestivo = festivos.has(s.date);
                               const sorted = sortHours(s.scheduleHours);
                               return (
                                 <tr
@@ -237,37 +257,44 @@ setNuevoSlot(
                                     </p>
                                   </td>
                                   <td className="px-4 py-4">
-                                    <div className="flex flex-wrap gap-2">
-                                      {sorted.map((h) => {
-                                        const [hh, mm] = h.hour.split(":").map(Number);
-                                        const total = hh * 60 + mm + 20;
-                                        const nextHour = `${String(
-                                          Math.floor(total / 60)
-                                        ).padStart(2, "0")}:${String(total % 60).padStart(
-                                          2,
-                                          "0"
-                                        )}`;
-                                        const isSelected =
-                                          scheduleSelected?.date === s.date &&
-                                          horaSeleccionada === h.hour &&
-                                          slotOficinaId === oficina.officeId;
-                                        return (
-                                          <button
-                                            key={h.hour}
-                                            onClick={() =>
-                                              handleSeleccionarHora(s, h.hour, oficina)
-                                            }
-                                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
-                                              isSelected
-                                                ? "bg-green-500 text-white border-green-500 shadow-sm"
-                                                : "bg-sky-400 text-white border-sky-400 hover:bg-sky-500"
-                                            }`}
-                                          >
-                                            {h.hour} - {nextHour}
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
+                                    {esFestivo ? (
+                                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700 border border-orange-200">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                                        Festivo
+                                      </span>
+                                    ) : (
+                                      <div className="flex flex-wrap gap-2">
+                                        {sorted.map((h) => {
+                                          const [hh, mm] = h.hour.split(":").map(Number);
+                                          const total = hh * 60 + mm + 20;
+                                          const nextHour = `${String(
+                                            Math.floor(total / 60)
+                                          ).padStart(2, "0")}:${String(total % 60).padStart(
+                                            2,
+                                            "0"
+                                          )}`;
+                                          const isSelected =
+                                            scheduleSelected?.date === s.date &&
+                                            horaSeleccionada === h.hour &&
+                                            slotOficinaId === oficina.officeId;
+                                          return (
+                                            <button
+                                              key={h.hour}
+                                              onClick={() =>
+                                                handleSeleccionarHora(s, h.hour, oficina)
+                                              }
+                                              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                                                isSelected
+                                                  ? "bg-green-500 text-white border-green-500 shadow-sm"
+                                                  : "bg-sky-400 text-white border-sky-400 hover:bg-sky-500"
+                                              }`}
+                                            >
+                                              {h.hour} - {nextHour}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
                                   </td>
                                 </tr>
                               );

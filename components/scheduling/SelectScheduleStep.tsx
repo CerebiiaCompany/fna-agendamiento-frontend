@@ -8,6 +8,7 @@ import {
   type OfficeAvailability,
   type ScheduleItem,
 } from "../../lib/api";
+import { getColombianHolidays } from "../../lib/holidays";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
@@ -36,6 +37,22 @@ export function SeleccionHorarioStep() {
     slotSeleccionado?.hour ?? ""
   );
   const [slotSeleccionadoOfficeId, setSlotSeleccionadoOfficeId] = useState<number | null>(null);
+  const [festivos, setFestivos] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const abort = new AbortController();
+    const year = new Date().getFullYear();
+    Promise.all([
+      getColombianHolidays(year, abort.signal),
+      getColombianHolidays(year + 1, abort.signal),
+    ])
+      .then(([h1, h2]) => {
+        if (abort.signal.aborted) return;
+        setFestivos(new Set([...h1, ...h2]));
+      })
+      .catch(() => {});
+    return () => abort.abort();
+  }, []);
 
   // ── Carga disponibilidad ─────────────────────────────────────────────────
   useEffect(() => {
@@ -193,7 +210,7 @@ export function SeleccionHorarioStep() {
                             const filtered = schedules.filter(
                               (s: ScheduleItem) =>
                                 s.weekDay !== "DOMINGO" &&
-                                s.scheduleHours.length > 0
+                                (s.scheduleHours.length > 0 || festivos.has(s.date))
                             );
 
                             if (filtered.length === 0) {
@@ -210,6 +227,7 @@ export function SeleccionHorarioStep() {
                             }
 
                             return filtered.map((s: ScheduleItem) => {
+                              const esFestivo = festivos.has(s.date);
                               const sorted = sortHours(s.scheduleHours);
                               return (
                                 <tr
@@ -225,39 +243,46 @@ export function SeleccionHorarioStep() {
                                     </p>
                                   </td>
                                   <td className="px-4 py-4">
-                                    <div className="flex flex-wrap gap-2">
-                                      {sorted.map((h) => {
-                                        const nextHour = (() => {
-                                          const [hh, mm] = h.hour
-                                            .split(":")
-                                            .map(Number);
-                                          const total = hh * 60 + mm + 20;
-                                          return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
-                                        })();
+                                    {esFestivo ? (
+                                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700 border border-orange-200">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                                        Festivo
+                                      </span>
+                                    ) : (
+                                      <div className="flex flex-wrap gap-2">
+                                        {sorted.map((h) => {
+                                          const nextHour = (() => {
+                                            const [hh, mm] = h.hour
+                                              .split(":")
+                                              .map(Number);
+                                            const total = hh * 60 + mm + 20;
+                                            return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+                                          })();
 
-                                        const isSelected =
-                                          scheduleSelected?.date === s.date &&
-                                          horaSeleccionada === h.hour &&
-                                          slotSeleccionadoOfficeId === oficina.officeId;
+                                          const isSelected =
+                                            scheduleSelected?.date === s.date &&
+                                            horaSeleccionada === h.hour &&
+                                            slotSeleccionadoOfficeId === oficina.officeId;
 
-                                        return (
-                                          <button
-                                            key={h.hour}
-                                            onClick={() =>
-                                              handleSeleccionarHora(s, h.hour, oficina)
-                                            }
-                                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border
-                                              ${
-                                                isSelected
-                                                  ? "bg-green-500 text-white border-green-500 shadow-sm"
-                                                  : "bg-sky-400 text-white border-sky-400 hover:bg-sky-500 hover:border-sky-500"
-                                              }`}
-                                          >
-                                            {h.hour} - {nextHour}
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
+                                          return (
+                                            <button
+                                              key={h.hour}
+                                              onClick={() =>
+                                                handleSeleccionarHora(s, h.hour, oficina)
+                                              }
+                                              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border
+                                                ${
+                                                  isSelected
+                                                    ? "bg-green-500 text-white border-green-500 shadow-sm"
+                                                    : "bg-sky-400 text-white border-sky-400 hover:bg-sky-500 hover:border-sky-500"
+                                                }`}
+                                            >
+                                              {h.hour} - {nextHour}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
                                   </td>
                                 </tr>
                               );
