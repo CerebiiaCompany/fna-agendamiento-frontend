@@ -17,7 +17,7 @@ function formatFecha(date: string | null) {
 }
 
 export function BuscarCitaStep() {
-  const { setCitaActiva, setPaso } = useRescheduleStore();
+  const { setCitaActiva, setPaso, clearRescheduleSession } = useRescheduleStore();
 
   const [documento, setDocumento] = useState("");
   const [estado, setEstado] = useState<Estado>("idle");
@@ -81,6 +81,7 @@ export function BuscarCitaStep() {
       setError("Selecciona una cita para reagendar.");
       return;
     }
+    clearRescheduleSession();
     setCitaActiva(citaElegida);
     setPaso(2);
   };

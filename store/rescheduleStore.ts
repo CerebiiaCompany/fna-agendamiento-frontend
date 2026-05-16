@@ -28,6 +28,8 @@ type RescheduleState = {
   ) => void;
   setEstructura: (estructura: CityStructure[]) => void;
   setResultado: (r: { appointmentId: number; status: string }) => void;
+  /** Limpia datos del flujo anterior sin reiniciar paso ni cita seleccionada */
+  clearRescheduleSession: () => void;
   reset: () => void;
 };
 
@@ -50,6 +52,17 @@ export const useRescheduleStore = create<RescheduleState>((set) => ({
 
   setEstructura: (estructura) => set({ estructura }),
   setResultado: (resultado) => set({ resultado }),
+
+  clearRescheduleSession: () =>
+    set({
+      resultado: undefined,
+      nuevoSlot: undefined,
+      nuevaOficinaId: undefined,
+      nuevaOficinaDescripcion: undefined,
+      nuevoDepartmentId: undefined,
+      nuevoSubdepartmentId: undefined,
+      estructura: [],
+    }),
 
   reset: () =>
     set({

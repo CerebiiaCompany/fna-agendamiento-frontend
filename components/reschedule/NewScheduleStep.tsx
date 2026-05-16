@@ -18,7 +18,7 @@ import { MapPin } from "lucide-react";
 type EstadoCarga = "idle" | "loading" | "success" | "error";
 
 export function NuevoHorarioStep() {
-  const { citaActiva, setEstructura, setPaso, setNuevoSlot, estructura } =
+  const { citaActiva, setEstructura, setPaso, setNuevoSlot, estructura, clearRescheduleSession } =
     useRescheduleStore();
 
   const [oficinasDisponibles, setOficinasDisponibles] = useState<OfficeAvailability[]>([]);
@@ -43,6 +43,13 @@ export function NuevoHorarioStep() {
       .catch(() => {});
     return () => abort.abort();
   }, []);
+
+  useEffect(() => {
+    setScheduleSelected(null);
+    setHoraSeleccionada("");
+    setSlotOficinaId(null);
+    setErrorMensaje(null);
+  }, [citaActiva?.id]);
 
   useEffect(() => {
     if (!citaActiva?.departmentId || !citaActiva?.subdepartmentId) return;
@@ -146,13 +153,14 @@ if (!service || !subservice) {
   return;
 }
 
-setNuevoSlot(
-  { date: scheduleSelected.date, hour: horaNormalizada },
-  slotOficinaId,
-  oficina?.descriptionOffice ?? "",
-  subservice.id,
-  service.id
-);
+    clearRescheduleSession();
+    setNuevoSlot(
+      { date: scheduleSelected.date, hour: horaNormalizada },
+      slotOficinaId,
+      oficina?.descriptionOffice ?? "",
+      subservice.id,
+      service.id
+    );
 
     setPaso(3);
   };
@@ -339,7 +347,10 @@ setNuevoSlot(
                 <Button
                   variant="outline"
                   className="w-full sm:w-auto h-11 px-5"
-                  onClick={() => setPaso(1)}
+                  onClick={() => {
+                    clearRescheduleSession();
+                    setPaso(1);
+                  }}
                 >
                   Volver
                 </Button>

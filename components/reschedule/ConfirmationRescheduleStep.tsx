@@ -25,6 +25,8 @@ export function ConfirmacionRescheduleStep() {
     nuevoSubdepartmentId,
     setResultado,
     setPaso,
+    reset,
+    clearRescheduleSession,
     resultado,
   } = useRescheduleStore();
 
@@ -116,7 +118,7 @@ export function ConfirmacionRescheduleStep() {
             <Button
               variant="outline"
                className="w-full sm:w-auto h-11 px-5 border-blue-500 text-blue-500"
-               onClick={() => setPaso(1)}
+               onClick={() => reset()}
                disabled={enviando}
             >
               Volver a reagendar cita
@@ -192,7 +194,10 @@ export function ConfirmacionRescheduleStep() {
             <Button
               variant="outline"
               className="w-full sm:w-auto h-11 px-5"
-              onClick={() => setPaso(2)}
+              onClick={() => {
+                clearRescheduleSession();
+                setPaso(2);
+              }}
               disabled={enviando}
             >
               Volver
