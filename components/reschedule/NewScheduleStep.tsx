@@ -11,6 +11,7 @@ import {
   type ScheduleItem,
 } from "../../lib/api";
 import { getColombianHolidays } from "../../lib/holidays";
+import { isAllowedScheduleDate } from "../../lib/schedules";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
@@ -233,7 +234,7 @@ if (!service || !subservice) {
                           {(() => {
                             const filtered = schedules.filter(
                               (s) =>
-                                s.weekDay !== "DOMINGO" &&
+                                isAllowedScheduleDate(s.date, s.weekDay) &&
                                 (s.scheduleHours.length > 0 || festivos.has(s.date))
                             );
                             if (filtered.length === 0) {
